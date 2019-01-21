@@ -12,17 +12,32 @@ import json
 import logging
 import os
 import re
+import sys
 from copy import deepcopy
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List, Any
 
 __version__ = VERSION = "0.1.0"
 
 ROOT = os.getcwd()
 
-DJANGO_SETTINGS_FILE = "src/events/settings/base.py"
-SPHINX_CONF_FILE = "docs/source/conf.py"
-SONAR_FILE = "sonar-project.properties"
-PACKAGES_FILES = ["src/assets/packages.json", "src/assets/packages-lock.json"]
+PACKAGES_FILES = ["packages.json", "packages-lock.json"]
+
+# main
+DEFAULT_MAIN_RE = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
+DEFAULT_MAIN_TEMPLATE = "__version__ = VERSION = \"{major}.{minor}.{release}\"\n"
+
+# Node
+DEFAULT_NODE_KEY = "version"
+
+# sonar
+DEFAULT_SONAR_RE = r"^sonar.projectVersion=([.\d]+)$"
+DEFAULT_SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}\n"
+
+# Sphinx
+DEFAULT_SPHINX_VERSION_FORMAT = 'version = "{major}.{minor}"\n'
+DEFAULT_SPHINX_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
+DEFAULT_SPHINX_VERSION_RE = r"^version\s+=\s+[\"']([.\d]+)[\"']$"
+DEFAULT_SPHINX_RELEASE_RE = r"^release\s+=\s+[\"']([.\d]+)[\"']$"
 
 LEVELS = (
     logging.FATAL,
@@ -65,14 +80,20 @@ def normalize_file_path(path: str) -> str:
     :param path: Path to check
     :return: normalized absolute path
     """
+    # Path is absolute
     if os.path.isabs(path):
         if os.path.isfile(path):
             return path
         else:
             raise UpdateException("Path %s absolute path does not point to a real file. "
                                   "Please check your release.ini file" % path)
-    if os.path.isfile(os.path.join(ROOT, path)):
+
+    # Path is relative
+    abs_path = os.path.join(ROOT, path)
+    logging.debug('normalize_file_path(%s) \nabs_path = %s', path, abs_path)
+    if os.path.isfile(abs_path):
         return path
+
     raise UpdateException("Path %s relative path does not point to a real file. "
                           "Please check your release.ini file." % path)
 
@@ -85,15 +106,137 @@ def update_files(
         config_path: Optional[str] = None,
         dry_run: bool = True
 ):
+    """
+    Updates the files according to the release.ini file
+
+    :param release_number: Number
+    :param config_path: path to the release.ini config file
+    :param dry_run: If `True`, no operation performed
+    :return: 0 if no error...
+    """
+    logging.info("Current ROOT file: %s", ROOT)
     logging.info("Current config file: %s", config_path)
     parser = configparser.ConfigParser()
     parser.read(config_path)
 
-    main_path = parser.get("DEFAULT", "main_project_file")
-    if main_path:
-        _path = normalize_file_path(main_path)
-        update_main_file(path=_path, release_number=release_number, dry_run=dry_run)
+    # Updates the main project (DJANGO_SETTINGS_MODULE file for django projects)
+    ret = _update_main_file(parser=parser, release_number=release_number, dry_run=dry_run)
+    if ret != 0:
+        return ret
 
+    ret = _update_node_package_json(parser=parser, release_number=release_number, dry_run=dry_run)
+    if ret != 0:
+        return ret
+
+    # Updates sonar-scanner properties
+    ret = _update_sonar_properties(parser=parser, release_number=release_number, dry_run=dry_run)
+    if ret != 0:
+        return ret
+
+    # Updates sphinx file
+    ret = _update_sphinx_conf(parser=parser, release_number=release_number, dry_run=dry_run)
+    if ret != 0:
+        return ret
+
+    return 0
+
+
+def _update_main_file(
+        parser: configparser.ConfigParser,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True
+):
+    try:
+        main_path = parser.get("main_project", "path")
+    except configparser.NoOptionError as noe:
+        logging.warning("_update_main_file() No option provided: %s", noe)
+        return 0
+
+    main_pattern = parser.get("main_project", "re", fallback=DEFAULT_MAIN_RE)
+
+    if main_path:
+        try:
+            _path = normalize_file_path(main_path)
+            update_main_file(path=_path, pattern=main_pattern, release_number=release_number, dry_run=dry_run)
+        except UpdateException as ue:
+            logging.fatal("update_files() Unable to update the main file: %s", ue)
+            return 1
+    return 0
+
+
+def _update_node_package_json(
+        parser: configparser.ConfigParser,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True
+):
+    # Updates the package.json and package-lock.json for node-based projects
+    try:
+        node_path = parser.get("node_module", "path")
+    except configparser.NoOptionError as noe:
+        logging.warning("_update_node_package_json() No option provided: %s", noe)
+        return 0
+    node_key = parser.get("node_module", "key", fallback=DEFAULT_NODE_KEY)
+
+    if node_path:
+        _path = normalize_file_path(node_path)
+        try:
+            update_packages_json(path=_path, release_number=release_number, key=node_key, dry_run=dry_run)
+        except UpdateException as ue:
+            logging.fatal("update_files() Unable to update the node file: %s", ue)
+            return 2
+    return 0
+
+
+def _update_sonar_properties(
+        parser: configparser.ConfigParser,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True
+):
+    try:
+        sonar_path = parser.get("sonar", "path")
+    except configparser.NoOptionError as noe:
+        logging.warning("_update_sonar_properties() No option provided: %s", noe)
+        return 0
+
+    sonar_re = parser.get("sonar", "re", fallback=DEFAULT_SONAR_RE)
+    if sonar_path and sonar_re:
+        _path = normalize_file_path(sonar_path)
+        try:
+            update_sonar_properties(path=_path, pattern=sonar_re, release_number=release_number, dry_run=dry_run)
+        except UpdateException as ue:
+            logging.fatal("update_files() Unable to update the sonar file: %s", ue)
+            return 4
+    return 0
+
+
+def _update_sphinx_conf(
+        parser: configparser.ConfigParser,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True
+):
+    try:
+        sphinx_path = parser.get("docs", "path")
+    except configparser.NoOptionError as noe:
+        logging.warning("_update_sphinx_conf() No option provided: %s", noe)
+        return 0
+
+    sphinx_patterns = (
+        parser.get("docs", "version_re", fallback=DEFAULT_SPHINX_VERSION_RE),
+        parser.get("docs", "release_re", fallback=DEFAULT_SPHINX_RELEASE_RE)
+    )
+
+    if sphinx_path and sphinx_patterns:
+        _path = normalize_file_path(sphinx_path)
+        try:
+            update_sphinx_conf(
+                path=_path,
+                patterns=sphinx_patterns,
+                release_number=release_number,
+                dry_run=dry_run
+            )
+        except UpdateException as ue:
+            logging.fatal("update_files() Unable to update the sphinx file: %s", ue)
+            return 8
     return 0
 
 
@@ -101,7 +244,7 @@ def update_main_file(
         path: str,
         pattern: str,
         release_number: Tuple[str, str, str],
-        dry_run: bool
+        dry_run: bool = True
 ):
     """
     Updates the main django settings file
@@ -112,14 +255,8 @@ def update_main_file(
     :param dry_run: If `True`, no operation performed
     :return: Nothing
     """
-
-    if not DJANGO_SETTINGS_FILE:
-        print("update_main_file() no `DJANGO_SETTINGS_FILE` provided")
-
-    major, minor, release = release_number
-
     version_re = re.compile(pattern)
-    version_format = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
+    version_format = DEFAULT_MAIN_TEMPLATE
 
     old_row, new_row = None, None
     counter = 0
@@ -130,9 +267,6 @@ def update_main_file(
     new_content = deepcopy(content)
 
     for counter, row in enumerate(content):
-        logging.debug(
-            "update_main_file() a row has been found:\n%d %s", counter, row
-        )
         searched = version_re.search(row)
         if searched:
             logging.debug(
@@ -141,7 +275,11 @@ def update_main_file(
                 row,
             )
             old_row = deepcopy(row)
-            new_row = version_format.format(major=major, minor=minor, release=release)
+            new_row = version_format.format(
+                major=release_number[0],
+                minor=release_number[1],
+                release=release_number[2]
+            )
             break
 
     if old_row and new_row:
@@ -149,75 +287,139 @@ def update_main_file(
             "update_main_file() old_row:\n%s\nnew_row:\n%s", old_row, new_row
         )
 
-    if not dry_run and new_row and counter:
-        new_content[counter] = new_row
+    if dry_run:
+        logging.info("update_main_file() No operation performed, dry_run = %s", dry_run)
+        return
 
-        with open(os.path.join(ROOT, DJANGO_SETTINGS_FILE), "w") as ofile:
+    if new_row and counter:
+        new_content[counter] = new_row
+        with open(path, "w") as ofile:
             ofile.writelines(new_content)
-        logging.info('update_main_file() "%s" updated.', DJANGO_SETTINGS_FILE)
+        logging.info('update_main_file() "%s" updated.', path)
+        return
+    raise UpdateException("An error has append on updating version")
+
+
+def update_packages_json(
+        path: str,
+        release_number: Tuple[str, str, str],
+        key: str = DEFAULT_NODE_KEY,
+        dry_run: bool = True,
+):
+    """
+    Updates the package.json file
+
+    :param path: Node root directory
+    :param release_number: Release number
+    :param dry_run: If `True`, no operation performed
+    :param key: json dict key (default: "version")
+    :return: Nothing
+    """
+    package_files = [os.path.join(ROOT, path, package_file) for package_file in PACKAGES_FILES]
+
+    for package_file in package_files:
+        logging.info("update_packages_json() package_file = %s", package_file)
+        try:
+            with open(package_file, "r") as pf:
+                package = json.loads(pf.read())
+            new_package = deepcopy(package)
+            new_package[key] = ".".join(release_number)
+            updated = json.dumps(new_package, indent=4)
+            if dry_run:
+                logging.info("update_main_file() No operation performed, dry_run = %s", dry_run)
+                continue
+            if not dry_run:
+                pf.write(updated)
+        except IOError as ioe:
+            raise UpdateException("Unable to perform package[-lock].json update:", ioe)
+
+
+def update_sonar_properties(
+        path: str,
+        pattern: str,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True
+
+):
+    """
+    Updates the sonar-project.properties file
+
+    :param path: sonar-properties.ini file path
+    :param pattern: RE pattern to locate the version string
+    :param release_number: Release number as a tuple (<major>, <minor>, <release>)
+    :param dry_run: If True, noop performed
+    :return: Nothing
+    """
+
+    version_re = re.compile(pattern)
+    version_format = DEFAULT_SONAR_TEMPLATE
+
+    old_version_row, new_version_row = None, None
+
+    with open(path, "r") as ifile:
+        content = ifile.readlines()
+
+    new_content = deepcopy(content)
+    counter = 0
+
+    for counter, row in enumerate(content):
+        version_searched = version_re.search(row)
+        if version_searched:
+            old_version_row = deepcopy(row)
+            new_version_row = version_format.format(
+                major=release_number[0],
+                minor=release_number[1]
+            )
+            break
+
+    if old_version_row:
+        logging.info(
+            "update_sonar_properties() old_version_row:\n%s\nnew_version_row:\n%s",
+            old_version_row,
+            new_version_row,
+        )
+
+    # Updates the new file
+    new_content[counter] = new_version_row
+
+    if dry_run:
+        logging.info("update_sonar_properties() No operation performed, dry_run = %s", dry_run)
+        return
+
+    if new_version_row:
+        with open(path, "w") as ofile:
+            ofile.writelines(new_content)
+            logging.info('update_sonar_properties() "%s" updated.', path)
         return
 
     raise UpdateException("An error has append on updating version")
 
 
-def update_packages_json(major: str, minor: str, release: str, dry_run: bool):
-    """
-    Updates the packages.json file
-
-    :param major: Major version
-    :param minor: Minor version
-    :param release: Release number
-    :param dry_run: If `True`, no operation performed
-    :return: Nothing
-    """
-    if not PACKAGES_FILES:
-        print("update_packages_json() no `PACKAGES_FILES` provided")
-        return
-
-    if isinstance(PACKAGES_FILES, str):
-        _PACKAGES_FILES = [PACKAGES_FILES]
-    else:
-        _PACKAGES_FILES = deepcopy(PACKAGES_FILES)
-
-    for file in _PACKAGES_FILES:
-        packages_file = os.path.join(ROOT, file)
-        logging.info("update_packages_json() packages_file = %s", packages_file)
-        try:
-            with open(packages_file, "rw") as pf:
-                packages = json.loads(pf.read())
-                packages["version"] = ".".join([major, minor, release])
-                updated = json.dumps(packages, indent=4)
-                if not dry_run:
-                    pf.write(updated)
-        except IOError as ioe:
-            raise UpdateException("Unable to perform packages[-lock].json update:", ioe)
-
-
-def update_sphinx_conf(major: str, minor: str, release: str, dry_run: bool):
+def update_sphinx_conf(
+        path: str,
+        patterns: Tuple[str, str],
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True):
     """
     Updates the sphinx conf.py file
 
-    :param major: Major version
-    :param minor: Minor version
-    :param release: Release number
+    :param path: sphinx conf file path
+    :param patterns: RE patterns to locate the version string
+    :param release_number: Release number as a tuple (<major>, <minor>, <release>)
     :param dry_run: If `True`, no operation performed
     :return: Nothing
     """
-    if not SPHINX_CONF_FILE:
-        print("update_sphinx_conf() no `SPHINX_CONF_FILE` provided")
-        return
+    version_re = re.compile(patterns[0])
+    release_re = re.compile(patterns[1])
 
-    version_re = re.compile(r"^version\s+=\s+[\"']([.\d]+)[\"']$")
-    release_re = re.compile(r"^release\s+=\s+[\"']([.\d]+)[\"']$")
-
-    version_format = 'version = "{major}.{minor}"\n'
-    release_format = 'release = "{major}.{minor}.{release}"\n'
+    version_format = DEFAULT_SPHINX_VERSION_FORMAT
+    release_format = DEFAULT_SPHINX_RELEASE_FORMAT
 
     old_version_row, old_release_row = None, None
     new_version_row, new_release_row = None, None
 
     # Reads and copy the file content
-    with open(os.path.join(ROOT, SPHINX_CONF_FILE), "r") as ifile:
+    with open(path, "r") as ifile:
         content = ifile.readlines()
     new_content = deepcopy(content)
 
@@ -229,7 +431,10 @@ def update_sphinx_conf(major: str, minor: str, release: str, dry_run: bool):
         if version_searched:
             counter_version = counter
             old_version_row = deepcopy(row)
-            new_version_row = version_format.format(major=major, minor=minor)
+            new_version_row = version_format.format(
+                major=release_number[0],
+                minor=release_number[1]
+            )
             continue
 
         # Searches for the "release" row
@@ -238,7 +443,9 @@ def update_sphinx_conf(major: str, minor: str, release: str, dry_run: bool):
             counter_release = counter
             old_release_row = deepcopy(row)
             new_release_row = release_format.format(
-                major=major, minor=minor, release=release
+                major=release_number[0],
+                minor=release_number[1],
+                release=release_number[2]
             )
             continue
 
@@ -247,67 +454,27 @@ def update_sphinx_conf(major: str, minor: str, release: str, dry_run: bool):
 
     if old_version_row and old_release_row:
         logging.info(
-            "update_sphinx_conf() old_version_row:\n%s\nnew_version_row:\n%s",
-            old_version_row,
-            new_version_row,
+            "update_sphinx_conf() \nold_version_row: %s\nnew_version_row: %s",
+            old_version_row.strip('\n'),
+            new_version_row.strip('\n'),
+        )
+        logging.info(
+            "update_sphinx_conf() \nold_release_row: %s\nnew_release_row: %s",
+            old_release_row.strip('\n'),
+            new_release_row.strip('\n'),
         )
 
-    if not dry_run and counter_version and counter_release:
+    if dry_run:
+        logging.info("update_sphinx_conf() No operation performed, dry_run = %s", dry_run)
+        return
+
+    if counter_version and counter_release:
         new_content[counter_version] = new_version_row
         new_content[counter_release] = new_release_row
 
-        with open(os.path.join(ROOT, SPHINX_CONF_FILE), "w") as ofile:
+        with open(path, "w") as ofile:
             ofile.writelines(new_content)
-        logging.info('update_sphinx_conf() "%s" updated.', SPHINX_CONF_FILE)
-        return
-
-    raise UpdateException("An error has append on updating version")
-
-
-def update_sonar_properties(major: str, minor: str, release: str, dry_run: bool):
-    """
-    Updates the sonar-project.properties file
-
-    :param major: Major version
-    :param minor: Minor version
-    :param release: Release number
-    :param dry_run: If `True`, no operation performed
-    :return: Nothing
-    """
-    if not SONAR_FILE:
-        print("update_sonar_properties() no `SONAR_FILE` provided")
-        return
-
-    version_re = re.compile(r"^sonar.projectVersion=([.\d]+)$")
-    version_format = "sonar.projectVersion={major}.{minor}\n"
-
-    old_version_row, new_version_row = None, None
-
-    with open(os.path.join(ROOT, SONAR_FILE), "r") as ifile:
-        content = ifile.readlines()
-
-    new_content = deepcopy(content)
-    counter = 0
-
-    for counter, row in enumerate(content):
-        version_searched = version_re.search(row)
-        if version_searched:
-            old_version_row = deepcopy(row)
-            new_version_row = version_format.format(major=major, minor=minor)
-            break
-
-    if old_version_row:
-        logging.info(
-            "update_sonar_properties() old_version_row:\n%s\nnew_version_row:\n%s",
-            old_version_row,
-            new_version_row,
-        )
-
-    if not dry_run:
-        new_content[counter] = new_version_row
-        with open(os.path.join(ROOT, SONAR_FILE), "w") as ofile:
-            ofile.writelines(new_content)
-        logging.info('update_sonar_properties() "%s" updated.', SONAR_FILE)
+        logging.info('update_sphinx_conf() "%s" updated.', path)
         return
 
     raise UpdateException("An error has append on updating version")
@@ -318,6 +485,12 @@ def update_sonar_properties(major: str, minor: str, release: str, dry_run: bool)
 
 # region Launcher
 def add_arguments(parser: argparse.ArgumentParser):
+    """
+    Adds args to parser
+
+    :param parser: args parser
+    :return: Updated args parser
+    """
     parser.add_argument(action="store", dest="release", help="Target release number")
     parser.add_argument(
         "-v",
@@ -327,6 +500,15 @@ def add_arguments(parser: argparse.ArgumentParser):
         default=3,
         help="Sets verbosity from 0 (quiet) to 4 (very verbose)",
     )
+    parser.add_argument(
+        "-d",
+        "--debug",
+        action="store_true",
+        dest="debug",
+        default=False,
+        help="Sets debug mode: verbosity maxi",
+    )
+
     parser.add_argument(
         "-n",
         "--dry-run",
@@ -347,6 +529,16 @@ def add_arguments(parser: argparse.ArgumentParser):
 
 
 def main(args: List[Any]):
+    """
+    Main launcher:
+
+    + parses args
+    + Checks for `release.ini` config file
+    + Launch the updates
+
+    :param args:
+    :return:
+    """
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
@@ -370,5 +562,7 @@ def main(args: List[Any]):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:])
+    sys.exit(
+        main(sys.argv[1:])
+    )
     # endregion Launcher
