@@ -91,7 +91,8 @@ def normalize_file_path(path: str) -> str:
     # Path is relative
     abs_path = os.path.join(ROOT, path)
     logging.debug('normalize_file_path(%s) \nabs_path = %s', path, abs_path)
-    if os.path.isfile(abs_path):
+    if os.path.isfile(abs_path) or os.path.isdir(abs_path):
+        logging.info("normalize_file_path(%s) %s exists", path, abs_path)
         return path
 
     raise UpdateException("Path %s relative path does not point to a real file. "
