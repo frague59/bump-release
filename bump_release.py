@@ -138,6 +138,11 @@ def update_files(
     if ret != 0:
         return ret
 
+    # Updates the release.ini file with the new release number
+    ret = update_release_ini(path=config_path, release_number=release_number, dry_run=dry_run)
+    if ret != 0:
+        return ret
+
     return 0
 
 
@@ -480,6 +485,24 @@ def update_sphinx_conf(
     raise UpdateException("An error has append on updating version")
 
 
+def update_release_ini(
+        path: str,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = False
+):
+    config = configparser.ConfigParser()
+    config.read(path)
+    previous_release = config.get("DEFAULT", "current_release")
+    new_release = ".".join(release_number)
+    if previous_release != new_release:
+        if dry_run:
+            logging.info("update_release_ini() No operation performed, dry_run = %s", dry_run)
+            return
+        with open(path, "w") as cfg_file:
+            config.set("DEFAULT", "current_release", new_release)
+            config.write(cfg_file)
+        logging.info('update_release_ini() "%s" updated.', path)
+    return 0
 # endregion Updaters
 
 
@@ -492,6 +515,7 @@ def add_arguments(parser: argparse.ArgumentParser):
     :return: Updated args parser
     """
     parser.add_argument(action="store", dest="release", help="Target release number")
+
     parser.add_argument(
         "-v",
         "--verbose",
@@ -552,10 +576,12 @@ def main(args: List[Any]):
     else:
         logging.basicConfig(level=options.verbosity)
 
-    config_path = os.path.join(ROOT, options.config)
-    if not os.path.isfile(config_path):
-        print("ERROR: Unable to find the config path: ", config_path)
-        return 1
+    if os.path.isfile(options.config):
+        root_path = os.path.dirname(os.path.abspath(options.config))
+        config_path = os.path.join(root_path, options.config)
+    else:
+        logging.fatal("Ubable to locate the release file.")
+        return -1
 
     release = split_release(options.release)
     return update_files(release_number=release, config_path=config_path)
