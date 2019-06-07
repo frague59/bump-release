@@ -24,7 +24,7 @@ PACKAGES_FILES = ["package.json", "package-lock.json"]
 
 # main
 DEFAULT_MAIN_RE = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
-DEFAULT_MAIN_TEMPLATE = "__version__ = VERSION = \"{major}.{minor}.{release}\"\n"
+DEFAULT_MAIN_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
 
 # Node
 DEFAULT_NODE_KEY = "version"
@@ -39,13 +39,7 @@ DEFAULT_SPHINX_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
 DEFAULT_SPHINX_VERSION_RE = r"^version\s+=\s+[\"']([.\d]+)[\"']$"
 DEFAULT_SPHINX_RELEASE_RE = r"^release\s+=\s+[\"']([.\d]+)[\"']$"
 
-LEVELS = (
-    logging.FATAL,
-    logging.ERROR,
-    logging.WARNING,
-    logging.INFO,
-    logging.DEBUG
-)
+LEVELS = (logging.FATAL, logging.ERROR, logging.WARNING, logging.INFO, logging.DEBUG)
 
 
 # region Utilities
@@ -85,27 +79,31 @@ def normalize_file_path(path: str) -> str:
         if os.path.isfile(path):
             return path
         else:
-            raise UpdateException("Path %s absolute path does not point to a real file. "
-                                  "Please check your release.ini file" % path)
+            raise UpdateException(
+                "Path %s absolute path does not point to a real file. "
+                "Please check your release.ini file" % path
+            )
 
     # Path is relative
     abs_path = os.path.join(ROOT, path)
-    logging.debug('normalize_file_path(%s) \nabs_path = %s', path, abs_path)
+    logging.debug("normalize_file_path(%s) \nabs_path = %s", path, abs_path)
     if os.path.isfile(abs_path) or os.path.isdir(abs_path):
         logging.info("normalize_file_path(%s) %s exists", path, abs_path)
         return path
 
-    raise UpdateException("Path %s relative path does not point to a real file. "
-                          "Please check your release.ini file." % path)
+    raise UpdateException(
+        "Path %s relative path does not point to a real file. "
+        "Please check your release.ini file." % path
+    )
 
 
 # endregion Utilities
 
 # region Updaters
 def update_files(
-        release_number: Tuple[str, str, str],
-        config_path: Optional[str] = None,
-        dry_run: bool = True
+    release_number: Tuple[str, str, str],
+    config_path: Optional[str] = None,
+    dry_run: bool = True,
 ):
     """
     Updates the files according to the release.ini file
@@ -121,26 +119,36 @@ def update_files(
     parser.read(config_path)
 
     # Updates the main project (DJANGO_SETTINGS_MODULE file for django projects)
-    ret = _update_main_file(parser=parser, release_number=release_number, dry_run=dry_run)
+    ret = _update_main_file(
+        parser=parser, release_number=release_number, dry_run=dry_run
+    )
     if ret != 0:
         return ret
 
-    ret = _update_node_package_json(parser=parser, release_number=release_number, dry_run=dry_run)
+    ret = _update_node_package_json(
+        parser=parser, release_number=release_number, dry_run=dry_run
+    )
     if ret != 0:
         return ret
 
     # Updates sonar-scanner properties
-    ret = _update_sonar_properties(parser=parser, release_number=release_number, dry_run=dry_run)
+    ret = _update_sonar_properties(
+        parser=parser, release_number=release_number, dry_run=dry_run
+    )
     if ret != 0:
         return ret
 
     # Updates sphinx file
-    ret = _update_sphinx_conf(parser=parser, release_number=release_number, dry_run=dry_run)
+    ret = _update_sphinx_conf(
+        parser=parser, release_number=release_number, dry_run=dry_run
+    )
     if ret != 0:
         return ret
 
     # Updates the release.ini file with the new release number
-    ret = update_release_ini(path=config_path, release_number=release_number, dry_run=dry_run)
+    ret = update_release_ini(
+        path=config_path, release_number=release_number, dry_run=dry_run
+    )
     if ret != 0:
         return ret
 
@@ -148,9 +156,9 @@ def update_files(
 
 
 def _update_main_file(
-        parser: configparser.ConfigParser,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
+    parser: configparser.ConfigParser,
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
 ) -> int:
     """
     Updates the main file: in django project, the settings/base.py file, else another file
@@ -174,7 +182,12 @@ def _update_main_file(
     if main_path:
         try:
             _path = normalize_file_path(main_path)
-            update_main_file(path=_path, pattern=main_pattern, release_number=release_number, dry_run=dry_run)
+            update_main_file(
+                path=_path,
+                pattern=main_pattern,
+                release_number=release_number,
+                dry_run=dry_run,
+            )
         except UpdateException as ue:
             logging.fatal("update_files() Unable to update the main file: %s", ue)
             return 1
@@ -182,9 +195,9 @@ def _update_main_file(
 
 
 def _update_node_package_json(
-        parser: configparser.ConfigParser,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
+    parser: configparser.ConfigParser,
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
 ) -> int:
     """
     Updates the node package file
@@ -209,7 +222,9 @@ def _update_node_package_json(
     if node_path:
         _path = normalize_file_path(node_path)
         try:
-            update_node_packages(path=_path, release_number=release_number, key=node_key, dry_run=dry_run)
+            update_node_packages(
+                path=_path, release_number=release_number, key=node_key, dry_run=dry_run
+            )
         except UpdateException as ue:
             logging.fatal("update_files() Unable to update the node file: %s", ue)
             return 2
@@ -217,9 +232,9 @@ def _update_node_package_json(
 
 
 def _update_sonar_properties(
-        parser: configparser.ConfigParser,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
+    parser: configparser.ConfigParser,
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
 ) -> int:
     """
     Updates the sonar-project properties file
@@ -242,7 +257,12 @@ def _update_sonar_properties(
     if sonar_path and sonar_re:
         _path = normalize_file_path(sonar_path)
         try:
-            update_sonar_properties(path=_path, pattern=sonar_re, release_number=release_number, dry_run=dry_run)
+            update_sonar_properties(
+                path=_path,
+                pattern=sonar_re,
+                release_number=release_number,
+                dry_run=dry_run,
+            )
         except UpdateException as ue:
             logging.fatal("update_files() Unable to update the sonar file: %s", ue)
             return 4
@@ -250,9 +270,9 @@ def _update_sonar_properties(
 
 
 def _update_sphinx_conf(
-        parser: configparser.ConfigParser,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
+    parser: configparser.ConfigParser,
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
 ):
     """
     Updates the sphinx conf.py file
@@ -273,7 +293,7 @@ def _update_sphinx_conf(
 
     sphinx_patterns = (
         parser.get("docs", "version_re", fallback=DEFAULT_SPHINX_VERSION_RE),
-        parser.get("docs", "release_re", fallback=DEFAULT_SPHINX_RELEASE_RE)
+        parser.get("docs", "release_re", fallback=DEFAULT_SPHINX_RELEASE_RE),
     )
 
     if sphinx_path and sphinx_patterns:
@@ -283,7 +303,7 @@ def _update_sphinx_conf(
                 path=_path,
                 patterns=sphinx_patterns,
                 release_number=release_number,
-                dry_run=dry_run
+                dry_run=dry_run,
             )
         except UpdateException as ue:
             logging.fatal("update_files() Unable to update the sphinx file: %s", ue)
@@ -292,11 +312,12 @@ def _update_sphinx_conf(
 
 
 def _update_file(
-        path: str,
-        pattern:str,
-        version_format: str,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True):
+    path: str,
+    pattern: str,
+    version_format: str,
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
+):
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
     with `pattern` with `version_format` formatted according to `release_number`.
@@ -320,22 +341,18 @@ def _update_file(
         searched = version_re.search(row)
         if searched:
             logging.debug(
-                "_update_file() a *MATCHING* row has been found:\n%d %s",
-                counter,
-                row,
+                "_update_file() a *MATCHING* row has been found:\n%d %s", counter, row
             )
             old_row = deepcopy(row)
             new_row = version_format.format(
                 major=release_number[0],
                 minor=release_number[1],
-                release=release_number[2]
+                release=release_number[2],
             )
             break
 
     if old_row and new_row:
-        logging.info(
-            "_update_file() old_row:\n%s\nnew_row:\n%s", old_row, new_row
-        )
+        logging.info("_update_file() old_row:\n%s\nnew_row:\n%s", old_row, new_row)
 
     if dry_run:
         logging.info("_update_file() No operation performed, dry_run = %s", dry_run)
@@ -351,10 +368,7 @@ def _update_file(
 
 
 def update_main_file(
-        path: str,
-        pattern: str,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
+    path: str, pattern: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
     Updates the main django settings file
@@ -371,15 +385,15 @@ def update_main_file(
         pattern=pattern,
         version_format=DEFAULT_MAIN_TEMPLATE,
         release_number=release_number,
-        dry_run=dry_run
+        dry_run=dry_run,
     )
 
 
 def update_node_packages(
-        path: str,
-        release_number: Tuple[str, str, str],
-        key: str = DEFAULT_NODE_KEY,
-        dry_run: bool = True,
+    path: str,
+    release_number: Tuple[str, str, str],
+    key: str = DEFAULT_NODE_KEY,
+    dry_run: bool = True,
 ):
     """
     Updates the package.json file
@@ -390,7 +404,9 @@ def update_node_packages(
     :param key: json dict key (default: "version")
     :return: Nothing
     """
-    package_files = [os.path.join(ROOT, path, package_file) for package_file in PACKAGES_FILES]
+    package_files = [
+        os.path.join(ROOT, path, package_file) for package_file in PACKAGES_FILES
+    ]
 
     for package_file in package_files:
         logging.info("update_node_packages() package_file = %s", package_file)
@@ -401,22 +417,24 @@ def update_node_packages(
             new_package[key] = ".".join(release_number)
             updated = json.dumps(new_package, indent=4)
             if dry_run:
-                logging.info("update_node_packages() No operation performed, dry_run = %s", dry_run)
+                logging.info(
+                    "update_node_packages() No operation performed, dry_run = %s",
+                    dry_run,
+                )
                 continue
             with open(package_file, "w") as pf:
                 pf.write(updated)
-                logging.info("update_node_packages() File \"%s\" updated.", package_file)
+                logging.info('update_node_packages() File "%s" updated.', package_file)
 
         except IOError as ioe:
-            raise UpdateException("update_node_packages() Unable to perform %s update:" % package_file, ioe)
+            raise UpdateException(
+                "update_node_packages() Unable to perform %s update:" % package_file,
+                ioe,
+            )
 
 
 def update_sonar_properties(
-        path: str,
-        pattern: str,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True
-
+    path: str, pattern: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
     Updates the sonar-project.properties file
@@ -432,15 +450,16 @@ def update_sonar_properties(
         pattern=pattern,
         version_format=DEFAULT_SONAR_TEMPLATE,
         release_number=release_number,
-        dry_run=dry_run
+        dry_run=dry_run,
     )
 
 
 def update_sphinx_conf(
-        path: str,
-        patterns: Tuple[str, str],
-        release_number: Tuple[str, str, str],
-        dry_run: bool = True):
+    path: str,
+    patterns: Tuple[str, str],
+    release_number: Tuple[str, str, str],
+    dry_run: bool = True,
+):
     """
     Updates the sphinx conf.py file
 
@@ -455,21 +474,19 @@ def update_sphinx_conf(
         pattern=patterns[0],
         version_format=DEFAULT_SPHINX_VERSION_FORMAT,
         release_number=release_number,
-        dry_run=dry_run
+        dry_run=dry_run,
     )
     _update_file(
         path=path,
         pattern=patterns[1],
         version_format=DEFAULT_SPHINX_RELEASE_FORMAT,
         release_number=release_number,
-        dry_run=dry_run
+        dry_run=dry_run,
     )
 
 
 def update_release_ini(
-        path: str,
-        release_number: Tuple[str, str, str],
-        dry_run: bool = False
+    path: str, release_number: Tuple[str, str, str], dry_run: bool = False
 ):
     config = configparser.ConfigParser()
     config.read(path)
@@ -479,16 +496,20 @@ def update_release_ini(
         logging.info(
             "update_release_ini() previous_release = %s / new_release = %s\n",
             previous_release,
-            new_release
+            new_release,
         )
         if dry_run:
-            logging.info("update_release_ini() No operation performed, dry_run = %s", dry_run)
+            logging.info(
+                "update_release_ini() No operation performed, dry_run = %s", dry_run
+            )
             return
         with open(path, "w") as cfg_file:
             config.set("DEFAULT", "current_release", new_release)
             config.write(cfg_file)
         logging.info('update_release_ini() "%s" updated.', path)
     return 0
+
+
 # endregion Updaters
 
 
@@ -533,7 +554,7 @@ def add_arguments(parser: argparse.ArgumentParser):
         action="store",
         dest="config",
         default="./release.ini",
-        help="Path to the .ini config file"
+        help="Path to the .ini config file",
     )
     return parser
 
@@ -551,8 +572,7 @@ def main(args: List[Any]):
     """
     global ROOT
     parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
     parser = add_arguments(parser=parser)
@@ -572,14 +592,10 @@ def main(args: List[Any]):
 
     release = split_release(options.release)
     return update_files(
-        release_number=release,
-        config_path=config_path,
-        dry_run=options.dry_run
+        release_number=release, config_path=config_path, dry_run=options.dry_run
     )
 
 
 if __name__ == "__main__":
-    sys.exit(
-        main(sys.argv[1:])
-    )
+    sys.exit(main(sys.argv[1:]))
     # endregion Launcher
