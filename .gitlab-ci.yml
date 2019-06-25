@@ -7,8 +7,8 @@ stages:
   - build
 
 before_script:
-  - apt-get install -y -qqq zip
-  - pip install pylint
+  - apt-get install --yes -qqq zip
+  - pip --cache-dir .pip/ install pylint
 
   # Check code quality against sonarqube
 sonar:
@@ -30,7 +30,6 @@ sonar:
     # yamllint disable-line rule:max-spaces-ahter
     - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
     - fi
-
   script:
     - sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
 
