@@ -6,7 +6,10 @@ image: python:3.6-stretch
 stages:
   - build
 
-# Check code quality against sonarqube
+before_script:
+  - apt-get install -y -qqq zip
+
+  # Check code quality against sonarqube
 sonar:
   stage: build
   variables:
