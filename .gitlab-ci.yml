@@ -22,7 +22,6 @@ sonar:
     SONAR_SCANNER_OPTS: "-Xmx512m"
   before_script:
     - test ${SONAR_DEBUG} -eq 1 && ls -la
-    - pip install --requirement requirements/sonar.txt
     # Installs sonar-runner ZIP file
     - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
     # yamllint disable-line rule:line-length
