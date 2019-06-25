@@ -595,6 +595,10 @@ def main(args: List[Any]):
 
     initialize_config(config_path)
 
+    if CONFIG["DEFAULT"].get("current_release") == options.release:
+        logging.error("The release number is already %s, no possible bump...", options.release)
+        return 0
+
     release = split_release(options.release)
     return update_files(
         release_number=release, config_path=config_path, dry_run=options.dry_run
