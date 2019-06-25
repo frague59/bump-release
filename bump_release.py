@@ -95,9 +95,8 @@ def normalize_file_path(path: str) -> str:
         "Path %s relative path does not point to a real file. "
         "Please check your release.ini file." % path
     )
-
-
 # endregion Utilities
+
 
 # region Updaters
 def update_files(
