@@ -18,7 +18,7 @@ from typing import Tuple, Optional, List, Any
 
 __version__ = VERSION = "0.1.0"
 
-#: Main config CONFIG
+#: Main config parser
 CONFIG = None
 
 ROOT = os.getcwd()
@@ -101,7 +101,7 @@ def normalize_file_path(path: str) -> str:
     )
 
 
-def initialize_config() -> None:
+def initialize_config(config_path) -> None:
     global CONFIG
     CONFIG = configparser.ConfigParser()
     CONFIG.read(config_path)
@@ -591,6 +591,8 @@ def main(args: List[Any]):
     else:
         logging.fatal("Ubable to locate the release file.")
         return -1
+
+    initialize_config(config_path)
 
     release = split_release(options.release)
     return update_files(
