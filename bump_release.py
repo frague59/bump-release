@@ -18,22 +18,24 @@ from typing import Tuple, Optional, List, Any
 
 __version__ = VERSION = "0.1.0"
 
-ROOT = os.getcwd()
+#: Main config CONFIG
+CONFIG = None
 
+ROOT = os.getcwd()
 PACKAGES_FILES = ["package.json", "package-lock.json"]
 
-# main
+# main (re search and replace)
 DEFAULT_MAIN_RE = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
 DEFAULT_MAIN_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
 
-# Node
+# Node (JSON value update)
 DEFAULT_NODE_KEY = "version"
 
-# sonar
+# sonar (re search and replace)
 DEFAULT_SONAR_RE = r"^sonar.projectVersion=([.\d]+)$"
 DEFAULT_SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}\n"
 
-# Sphinx
+# Sphinx (re search and replace)
 DEFAULT_SPHINX_VERSION_FORMAT = 'version = "{major}.{minor}"\n'
 DEFAULT_SPHINX_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
 DEFAULT_SPHINX_VERSION_RE = r"^version\s+=\s+[\"']([.\d]+)[\"']$"
@@ -71,6 +73,8 @@ def normalize_file_path(path: str) -> str:
     """
     Checks if a file exists, determining if it is an absolute path or de relative one.
 
+    @todo: Use `pathlib` instead of `os.path`
+
     :param path: Path to check
     :return: normalized absolute path
     """
@@ -95,6 +99,14 @@ def normalize_file_path(path: str) -> str:
         "Path %s relative path does not point to a real file. "
         "Please check your release.ini file." % path
     )
+
+
+def initialize_config() -> None:
+    global CONFIG
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read(config_path)
+
+
 # endregion Utilities
 
 
@@ -114,32 +126,30 @@ def update_files(
     """
     logging.info("Current ROOT file: %s", ROOT)
     logging.info("Current config file: %s", config_path)
-    parser = configparser.ConfigParser()
-    parser.read(config_path)
 
     # Updates the main project (DJANGO_SETTINGS_MODULE file for django projects)
     ret = _update_main_file(
-        parser=parser, release_number=release_number, dry_run=dry_run
+        release_number=release_number, dry_run=dry_run
     )
     if ret != 0:
         return ret
 
     ret = _update_node_package_json(
-        parser=parser, release_number=release_number, dry_run=dry_run
+        release_number=release_number, dry_run=dry_run
     )
     if ret != 0:
         return ret
 
     # Updates sonar-scanner properties
     ret = _update_sonar_properties(
-        parser=parser, release_number=release_number, dry_run=dry_run
+        release_number=release_number, dry_run=dry_run
     )
     if ret != 0:
         return ret
 
     # Updates sphinx file
     ret = _update_sphinx_conf(
-        parser=parser, release_number=release_number, dry_run=dry_run
+        release_number=release_number, dry_run=dry_run
     )
     if ret != 0:
         return ret
@@ -155,20 +165,18 @@ def update_files(
 
 
 def _update_main_file(
-    parser: configparser.ConfigParser,
     release_number: Tuple[str, str, str],
     dry_run: bool = True,
 ) -> int:
     """
     Updates the main file: in django project, the settings/base.py file, else another file
 
-    :param parser: config parser
     :param release_number: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: 0 if ok
     """
     try:
-        main_path = parser.get("main_project", "path")
+        main_path = CONFIG.get("main_project", "path")
     except configparser.NoSectionError as nse:
         logging.warning("_update_main_file() No section provided: %s", nse)
         return 0
@@ -176,14 +184,11 @@ def _update_main_file(
         logging.warning("_update_main_file() No option provided: %s", noe)
         return 0
 
-    main_pattern = parser.get("main_project", "re", fallback=DEFAULT_MAIN_RE)
-
     if main_path:
         try:
             _path = normalize_file_path(main_path)
             update_main_file(
                 path=_path,
-                pattern=main_pattern,
                 release_number=release_number,
                 dry_run=dry_run,
             )
@@ -194,21 +199,19 @@ def _update_main_file(
 
 
 def _update_node_package_json(
-    parser: configparser.ConfigParser,
     release_number: Tuple[str, str, str],
     dry_run: bool = True,
 ) -> int:
     """
     Updates the node package file
 
-    :param parser: config parser
     :param release_number: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: 0 if ok
     """
     # Updates the package.json and package-lock.json for node-based projects
     try:
-        node_path = parser.get("node_module", "path")
+        node_path = CONFIG.get("node_module", "path")
     except configparser.NoSectionError as nse:
         logging.warning("_update_node_package_json() No section provided: %s", nse)
         return 0
@@ -216,7 +219,7 @@ def _update_node_package_json(
         logging.warning("_update_node_package_json() No option provided: %s", noe)
         return 0
 
-    node_key = parser.get("node_module", "key", fallback=DEFAULT_NODE_KEY)
+    node_key = CONFIG.get("node_module", "key", fallback=DEFAULT_NODE_KEY)
 
     if node_path:
         _path = normalize_file_path(node_path)
@@ -231,20 +234,18 @@ def _update_node_package_json(
 
 
 def _update_sonar_properties(
-    parser: configparser.ConfigParser,
     release_number: Tuple[str, str, str],
     dry_run: bool = True,
 ) -> int:
     """
     Updates the sonar-project properties file
 
-    :param parser: config parser
     :param release_number: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: 0 if ok
     """
     try:
-        sonar_path = parser.get("sonar", "path")
+        sonar_path = CONFIG.get("sonar", "path")
     except configparser.NoSectionError as nse:
         logging.warning("_update_sonar_properties() No section provided: %s", nse)
         return 0
@@ -252,13 +253,11 @@ def _update_sonar_properties(
         logging.warning("_update_sonar_properties() No option provided: %s", noe)
         return 0
 
-    sonar_re = parser.get("sonar", "re", fallback=DEFAULT_SONAR_RE)
-    if sonar_path and sonar_re:
+    if sonar_path:
         _path = normalize_file_path(sonar_path)
         try:
             update_sonar_properties(
                 path=_path,
-                pattern=sonar_re,
                 release_number=release_number,
                 dry_run=dry_run,
             )
@@ -269,20 +268,18 @@ def _update_sonar_properties(
 
 
 def _update_sphinx_conf(
-    parser: configparser.ConfigParser,
     release_number: Tuple[str, str, str],
     dry_run: bool = True,
 ):
     """
     Updates the sphinx conf.py file
 
-    :param parser: config parser
     :param release_number: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: 0 if ok
     """
     try:
-        sphinx_path = parser.get("docs", "path")
+        sphinx_path = CONFIG.get("docs", "path")
     except configparser.NoSectionError as nse:
         logging.warning("_update_sphinx_conf() No section provided: %s", nse)
         return 0
@@ -290,17 +287,11 @@ def _update_sphinx_conf(
         logging.warning("_update_sphinx_conf() No option provided: %s", noe)
         return 0
 
-    sphinx_patterns = (
-        parser.get("docs", "version_re", fallback=DEFAULT_SPHINX_VERSION_RE),
-        parser.get("docs", "release_re", fallback=DEFAULT_SPHINX_RELEASE_RE),
-    )
-
-    if sphinx_path and sphinx_patterns:
+    if sphinx_path:
         _path = normalize_file_path(sphinx_path)
         try:
             update_sphinx_conf(
                 path=_path,
-                patterns=sphinx_patterns,
                 release_number=release_number,
                 dry_run=dry_run,
             )
@@ -331,7 +322,7 @@ def _update_file(
     version_re = re.compile(pattern)
 
     old_row, new_row = None, None
-    counter = 0
+    counter = None
     with open(path, "r") as ifile:
         content_lines = ifile.readlines()
     new_content = deepcopy(content_lines)
@@ -357,7 +348,7 @@ def _update_file(
         logging.info("_update_file() No operation performed, dry_run = %s", dry_run)
         return
 
-    if new_row and counter:
+    if new_row and counter is not None:
         new_content[counter] = new_row
         with open(path, "w") as ofile:
             ofile.writelines(new_content)
@@ -367,17 +358,22 @@ def _update_file(
 
 
 def update_main_file(
-    path: str, pattern: str, release_number: Tuple[str, str, str], dry_run: bool = True
+    path: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
-    Updates the main django settings file
+    Updates the main django settings file, or a python script with
+
+    .. code-block:: python
+       ...
+       __version__ = VERSION = "<major>.<minor>.<release>"
+       ...
 
     :param path: main file path
-    :param pattern: regexp pattern to locate the version in file
     :param release_number: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: Nothing
     """
+    pattern = CONFIG.get("main_project", "re", fallback=DEFAULT_MAIN_RE)
 
     _update_file(
         path=path,
@@ -433,7 +429,7 @@ def update_node_packages(
 
 
 def update_sonar_properties(
-    path: str, pattern: str, release_number: Tuple[str, str, str], dry_run: bool = True
+    path: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
     Updates the sonar-project.properties file
@@ -444,6 +440,8 @@ def update_sonar_properties(
     :param dry_run: If True, noop performed
     :return: Nothing
     """
+    pattern = CONFIG.get("sonar", "re", fallback=DEFAULT_SONAR_RE)
+
     _update_file(
         path=path,
         pattern=pattern,
@@ -455,7 +453,6 @@ def update_sonar_properties(
 
 def update_sphinx_conf(
     path: str,
-    patterns: Tuple[str, str],
     release_number: Tuple[str, str, str],
     dry_run: bool = True,
 ):
@@ -468,6 +465,11 @@ def update_sphinx_conf(
     :param dry_run: If `True`, no operation performed
     :return: Nothing
     """
+    patterns = (
+        CONFIG.get("docs", "version_re", fallback=DEFAULT_SPHINX_VERSION_RE),
+        CONFIG.get("docs", "release_re", fallback=DEFAULT_SPHINX_RELEASE_RE),
+    )
+
     _update_file(
         path=path,
         pattern=patterns[0],
@@ -513,16 +515,16 @@ def update_release_ini(
 
 
 # region Launcher
-def add_arguments(parser: argparse.ArgumentParser):
+def add_arguments(args_parser: argparse.ArgumentParser):
     """
-    Adds args to parser
+    Adds args to CONFIG
 
-    :param parser: args parser
-    :return: Updated args parser
+    :param args_parser: args parser
+    :return: Updated args CONFIG
     """
-    parser.add_argument(action="store", dest="release", help="Target release number")
+    args_parser.add_argument(action="store", dest="release", help="Target release number")
 
-    parser.add_argument(
+    args_parser.add_argument(
         "-v",
         "--verbose",
         action="store",
@@ -530,7 +532,7 @@ def add_arguments(parser: argparse.ArgumentParser):
         default=3,
         help="Sets verbosity from 0 (quiet) to 4 (debug)",
     )
-    parser.add_argument(
+    args_parser.add_argument(
         "-d",
         "--debug",
         action="store_true",
@@ -539,7 +541,7 @@ def add_arguments(parser: argparse.ArgumentParser):
         help="Sets debug mode: verbosity maxi",
     )
 
-    parser.add_argument(
+    args_parser.add_argument(
         "-n",
         "--dry-run",
         action="store_true",
@@ -547,7 +549,7 @@ def add_arguments(parser: argparse.ArgumentParser):
         default=False,
         help="Does not performs anything, displays the updates",
     )
-    parser.add_argument(
+    args_parser.add_argument(
         "-c",
         "--config",
         action="store",
@@ -555,7 +557,7 @@ def add_arguments(parser: argparse.ArgumentParser):
         default="./release.ini",
         help="Path to the .ini config file",
     )
-    return parser
+    return args_parser
 
 
 def main(args: List[Any]):
@@ -570,12 +572,13 @@ def main(args: List[Any]):
     :return:
     """
     global ROOT
-    parser = argparse.ArgumentParser(
-        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    args_parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    parser = add_arguments(parser=parser)
-    options = parser.parse_args(args)
+    args_parser = add_arguments(parser=args_parser)
+    options = args_parser.parse_args(args)
 
     if options.debug:
         logging.basicConfig(level=logging.DEBUG)

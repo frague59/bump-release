@@ -16,7 +16,7 @@ sonar:
     # CI vars
     CI_DEBUG_TRACE: "false"
     # Sonar vars
-    SONAR_DEBUG: 1
+    SONAR_DEBUG: 0
     SONAR_VERSION: "3.2.0.1227-linux"
     SONAR_HOST: "http://sonarqube.ville.tg"
     SONAR_SCANNER_OPTS: "-Xmx512m"
