@@ -8,6 +8,7 @@ stages:
 
 before_script:
   - apt-get install -y -qqq zip
+  - pip install pylint
 
   # Check code quality against sonarqube
 sonar:
