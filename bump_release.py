@@ -577,7 +577,7 @@ def main(args: List[Any]):
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    args_parser = add_arguments(parser=args_parser)
+    args_parser = add_arguments(args_parser=args_parser)
     options = args_parser.parse_args(args)
 
     if options.debug:

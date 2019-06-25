@@ -1,9 +1,8 @@
 """
 Tests for updaters
 """
-from copy import deepcopy
-from pathlib import Path
 import configparser
+from pathlib import Path
 from typing import Union
 
 import pytest
@@ -105,5 +104,5 @@ def test_update_sphinx(sphinx_file, release):
         dry_run=False
     )
 
-    found = _find_row(sphinx_file, ("version = \"1.1\"\n", "release = \"1.1.1\"\n", ))
+    found = _find_row(sphinx_file, ("version = \"1.1\"\n", "release = \"1.1.1\"\n",))
     assert found
