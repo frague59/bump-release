@@ -8,7 +8,6 @@ stages:
 
 before_script:
   - apt-get install --yes -qqq zip
-  - pip --cache-dir .pip/ install pylint
 
   # Check code quality against sonarqube
 sonar:
@@ -22,6 +21,7 @@ sonar:
     SONAR_HOST: "http://sonarqube.ville.tg"
     SONAR_SCANNER_OPTS: "-Xmx512m"
   before_script:
+    - pip --cache-dir .pip/ install pylint
     - test ${SONAR_DEBUG} -eq 1 && ls -la
     # Installs sonar-runner ZIP file
     - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
