@@ -14,7 +14,8 @@ import os
 import re
 import sys
 from copy import deepcopy
-from typing import Tuple, Optional, List, Any
+from pathlib import Path
+from typing import Tuple, Optional, List, Any, Union
 
 __version__ = VERSION = "0.1.0"
 
@@ -101,7 +102,7 @@ def normalize_file_path(path: str) -> str:
     )
 
 
-def initialize_config(config_path) -> None:
+def initialize_config(config_path: Union[str, Path]) -> None:
     global CONFIG
     CONFIG = configparser.ConfigParser()
     CONFIG.read(config_path)
@@ -587,9 +588,9 @@ def main(args: List[Any]):
 
     if os.path.isfile(options.config):
         ROOT = os.path.dirname(os.path.abspath(options.config))
-        config_path = os.path.join(ROOT, options.config)
+        config_path = Path(ROOT) / options.config
     else:
-        logging.fatal("Ubable to locate the release file.")
+        logging.fatal("Unable to locate the release file.")
         return -1
 
     initialize_config(config_path)
