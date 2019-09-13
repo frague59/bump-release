@@ -17,7 +17,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Tuple, Optional, List, Any, Union
 
-__version__ = VERSION = "0.2.0"
+__version__ = VERSION = "0.2.1"
 
 #: Main config parser
 CONFIG = None
