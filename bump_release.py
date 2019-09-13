@@ -17,7 +17,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Tuple, Optional, List, Any, Union
 
-__version__ = VERSION = "0.2.0"
+__version__ = VERSION = "0.2.1"
 
 #: Main config parser
 CONFIG = None
@@ -113,9 +113,9 @@ def initialize_config(config_path: Union[str, Path]) -> None:
 
 # region Updaters
 def update_files(
-    release_number: Tuple[str, str, str],
-    config_path: Optional[str] = None,
-    dry_run: bool = True,
+        release_number: Tuple[str, str, str],
+        config_path: Optional[str] = None,
+        dry_run: bool = True,
 ):
     """
     Updates the files according to the release.ini file
@@ -166,8 +166,8 @@ def update_files(
 
 
 def _update_main_file(
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ) -> int:
     """
     Updates the main file: in django project, the settings/base.py file, else another file
@@ -200,8 +200,8 @@ def _update_main_file(
 
 
 def _update_node_package_json(
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ) -> int:
     """
     Updates the node package file
@@ -235,8 +235,8 @@ def _update_node_package_json(
 
 
 def _update_sonar_properties(
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ) -> int:
     """
     Updates the sonar-project properties file
@@ -269,8 +269,8 @@ def _update_sonar_properties(
 
 
 def _update_sphinx_conf(
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ):
     """
     Updates the sphinx conf.py file
@@ -303,11 +303,11 @@ def _update_sphinx_conf(
 
 
 def _update_file(
-    path: str,
-    pattern: str,
-    version_format: str,
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        path: str,
+        pattern: str,
+        version_format: str,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ):
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
@@ -359,7 +359,7 @@ def _update_file(
 
 
 def update_main_file(
-    path: str, release_number: Tuple[str, str, str], dry_run: bool = True
+        path: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
     Updates the main django settings file, or a python script with
@@ -386,10 +386,10 @@ def update_main_file(
 
 
 def update_node_packages(
-    path: str,
-    release_number: Tuple[str, str, str],
-    key: str = DEFAULT_NODE_KEY,
-    dry_run: bool = True,
+        path: str,
+        release_number: Tuple[str, str, str],
+        key: str = DEFAULT_NODE_KEY,
+        dry_run: bool = True,
 ):
     """
     Updates the package.json file
@@ -430,7 +430,7 @@ def update_node_packages(
 
 
 def update_sonar_properties(
-    path: str, release_number: Tuple[str, str, str], dry_run: bool = True
+        path: str, release_number: Tuple[str, str, str], dry_run: bool = True
 ):
     """
     Updates the sonar-project.properties file
@@ -453,9 +453,9 @@ def update_sonar_properties(
 
 
 def update_sphinx_conf(
-    path: str,
-    release_number: Tuple[str, str, str],
-    dry_run: bool = True,
+        path: str,
+        release_number: Tuple[str, str, str],
+        dry_run: bool = True,
 ):
     """
     Updates the sphinx conf.py file
@@ -488,7 +488,7 @@ def update_sphinx_conf(
 
 
 def update_release_ini(
-    path: str, release_number: Tuple[str, str, str], dry_run: bool = False
+        path: str, release_number: Tuple[str, str, str], dry_run: bool = False
 ):
     config = configparser.ConfigParser()
     config.read(path)
