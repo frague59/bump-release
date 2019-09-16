@@ -36,23 +36,17 @@ sonar:
     - apt-get update
     - apt-get install --yes -qqq openjdk-11-jdk-headless zip
     - pip --cache-dir .pip/ install pylint
-    - test ${SONAR_DEBUG} -eq 1 && ls -la
-    # Installs sonar-runner ZIP file
-    - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
-    # yamllint disable-line rule:line-length
-    - wget --no-verbose "${SONAR_SCANNER_URL}"
-    # yamllint disable-line rule:max-spaces-ahter
-    - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
-    - fi
   script: |
-    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
-    # Runs the sonar-runner
-    export SONAR_SCANNER_OPTS="-Xmx512m"
-    if [[ ${SONAR_DEBUG} -eq 1 ]]; then
-      sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -X -Dsonar.host.url=$SONAR_HOST
-    else
-      sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.host.url=$SONAR_HOST
+    # Installs sonar-runner ZIP file
+    if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
+      wget --no-verbose ${SONAR_SCANNER_URL}
+      unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
     fi
+    [[ $DEBUG_SONAR -eq 1 ]] && sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
+    # Runs the sonar-runner
+    export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
+    export SONAR_USER_HOME=.
+    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.host.url=${SONAR_HOST}
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
@@ -60,6 +54,23 @@ sonar:
   tags:
     - python3.6
 
-  pages:
-    stage: build
-
+# Builds sphinx docs
+pages:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip/ install -r requirements.txt
+    - pip --cache-dir .pip/ install -r requirements-docs.txt
+  script: |
+    - cd ./docs
+    - make html
+    # Copy built files to /public
+    - mv build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  cache:
+    paths:
+      - .pip/
+      - docs/source/
+  tags:
+    - python3.6
