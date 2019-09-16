@@ -62,7 +62,7 @@ def test_update_main_project(config, version):
     assert str_path is not None
     path = MODULE_PATH / str_path
     new_row = helpers.update_file(path=path, pattern=helpers.MAIN_PROJECT_PATTERN, template=helpers.MAIN_PROJECT_TEMPLATE,
-                                  release_number=version, dry_run=True)
+                                  version=version, dry_run=True)
     assert new_row.strip() == "__version__ = VERSION = \"1.1.1\"", "MAIN: Versions does not match"
 
 
@@ -71,7 +71,7 @@ def test_update_sonar_properties(config, version):
     assert str_path is not None
     path = MODULE_PATH / str_path
     new_row = helpers.update_file(path=path, pattern=helpers.SONAR_PATTERN, template=helpers.SONAR_TEMPLATE,
-                                  release_number=version, dry_run=True)
+                                  version=version, dry_run=True)
     assert new_row.strip() == "sonar.projectVersion=1.1", "SONAR: Versions does not match"
 
 
@@ -84,11 +84,11 @@ def test_update_docs(config, version):
     version_format = config.get("docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT)
     release_format = config.get("docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT)
     new_row = helpers.update_file(path=path, pattern=release_pattern, template=release_format,
-                                  release_number=version, dry_run=True)
+                                  version=version, dry_run=True)
     assert new_row.strip() == "release = \"1.1.1\"", "DOCS: Versions does not match"
 
     new_row = helpers.update_file(path=path, pattern=version_pattern, template=version_format,
-                                  release_number=version, dry_run=True)
+                                  version=version, dry_run=True)
     assert new_row.strip() == "release = \"1.1\"", "DOCS: Versions does not match"
 
 

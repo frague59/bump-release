@@ -38,11 +38,16 @@ ANSIBLE_KEY = "git.branch"
 SONAR_PATTERN = r"^sonar.projectVersion=([.\d]+)$"
 SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}\n"
 
+# setup.py file
+SETUP_PATTERN = r"^\s*version=['\"]([.\d\w]+)['\"],$"
+SETUP_TEMPLATE = "    version=\"{major}.{minor}.{release}\",\n"
+
+
 # Sphinx (re search and replace)
+DOCS_VERSION_PATTERN = r"^release\s+=\s+[\"']([.\d\w]+)[\"']$"
+DOCS_RELEASE_PATTERN = r"^release\s+=\s+[\"']([.\d\w]+)[\"']$"
 DOCS_VERSION_FORMAT = 'release = "{major}.{minor}"\n'
 DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
-DOCS_VERSION_PATTERN = r"^release\s+=\s+[\"']([.\d]+)[\"']$"
-DOCS_RELEASE_PATTERN = r"^release\s+=\s+[\"']([.\d]+)[\"']$"
 
 
 # endregion Constants
@@ -79,7 +84,7 @@ def split_version(version: str) -> Tuple[str, str, str]:
         return major, minor, release
 
 
-def update_file(path: str, pattern: str, template: str, release_number: Tuple[str, str, str],
+def update_file(path: str, pattern: str, template: str, version: Tuple[str, str, str],
                 dry_run: bool = False) -> str:
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
@@ -88,12 +93,12 @@ def update_file(path: str, pattern: str, template: str, release_number: Tuple[st
     :param path: path of the file to update
     :param pattern: regexp to replace
     :param template: release format
-    :param release_number: Release number tuple (major, minor, release)
+    :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
     :return: New row
     """
     version_re = re.compile(pattern)
-    major, minor, release = release_number
+    major, minor, release = version
 
     old_row, new_row = None, None
     counter = None

@@ -64,6 +64,14 @@ def bump_release(
         logger.info("No release section for `sonar`: %s", e)
     # endregion
 
+    # region Updates setup.py file
+    try:
+        new_row = update_setup_file(version=version, dry_run=dry_run)
+        logger.debug("bump_release() `docs`: new_row = %s", new_row)
+    except helpers.NothingToDoException as e:
+        logger.info("No release section for `docs`: %s", e)
+    # endregion
+
     # region Updates sphinx file
     try:
         new_row = update_docs_conf(version=version, dry_run=dry_run)
@@ -111,8 +119,25 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True
         template = RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
-    return helpers.update_file(path=path, pattern=pattern, template=template, release_number=version,
+    return helpers.update_file(path=path, pattern=pattern, template=template, version=version,
                                dry_run=dry_run)
+
+
+def update_setup_file(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
+    """
+    Updates the setup.py file
+
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
+    """
+    try:
+        path = RELEASE_CONFIG.get("setup", "path")
+        pattern = RELEASE_CONFIG.get("setup", "pattern", fallback=helpers.SETUP_PATTERN)
+        template = RELEASE_CONFIG.get("setup", "template", fallback=helpers.SETUP_TEMPLATE)
+    except configparser.Error as e:
+        raise helpers.NothingToDoException(e)
+    return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
 
 
 def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
@@ -129,7 +154,7 @@ def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[boo
         template = RELEASE_CONFIG.get("sonar", "template", fallback=helpers.SONAR_TEMPLATE)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
-    return helpers.update_file(path=path, pattern=pattern, template=template, release_number=version,
+    return helpers.update_file(path=path, pattern=pattern, template=template, version=version,
                                dry_run=dry_run)
 
 
@@ -152,10 +177,10 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: Optional[bool] = Fa
         raise helpers.NothingToDoException(e)
 
     update_release = helpers.update_file(path=path, pattern=pattern_release, template=template_release,
-                                         release_number=version,
+                                         version=version,
                                          dry_run=dry_run)
     update_version = helpers.update_file(path=path, pattern=pattern_version, template=template_version,
-                                         release_number=version,
+                                         version=version,
                                          dry_run=dry_run)
     return update_release + update_version
 
