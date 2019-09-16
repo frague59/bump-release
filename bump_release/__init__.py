@@ -25,17 +25,17 @@ RELEASE_CONFIG = None
 @click.command()
 @click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
 @click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
-@click.version_option("-v", "--version", version="__version__")
-@click.argument("version")
+@click.version_option("-v", "--release", version="__version__")
+@click.argument("release")
 def bump_release(
-        version: Tuple[str, str, str],
+        release: Tuple[str, str, str],
         release_file: Optional[str] = None,
         dry_run: bool = True,
 ):
     """
     Updates the files according to the release.ini file
 
-    :param version: Version number, as "X.X.X"
+    :param release: Version number, as "X.X.X"
     :param release_file: path to the release.ini config file
     :param dry_run: If `True`, no operation performed
     :return: 0 if no error...
@@ -49,7 +49,7 @@ def bump_release(
 
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
-        new_row = update_main_file(version=version, dry_run=dry_run)
+        new_row = update_main_file(version=release, dry_run=dry_run)
         logger.debug("bump_release() `main_project`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `main_project`: %s", e)
@@ -57,7 +57,7 @@ def bump_release(
 
     # region Updates sonar-scanner properties
     try:
-        new_row = update_sonar_properties(version=version, dry_run=dry_run)
+        new_row = update_sonar_properties(version=release, dry_run=dry_run)
         logger.debug("bump_release() `sonar`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `sonar`: %s", e)
@@ -65,7 +65,7 @@ def bump_release(
 
     # region Updates sphinx file
     try:
-        new_row = update_docs_conf(version=version, dry_run=dry_run)
+        new_row = update_docs_conf(version=release, dry_run=dry_run)
         logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `docs`: %s", e)
@@ -73,7 +73,7 @@ def bump_release(
 
     # region Updates node packages file
     try:
-        new_row = update_node_package(version=version, dry_run=dry_run)
+        new_row = update_node_package(version=release, dry_run=dry_run)
         logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `node`: %s", e)
@@ -81,14 +81,14 @@ def bump_release(
 
     # region Updates YAML file
     try:
-        new_row = update_ansible_vars(version=version, dry_run=dry_run)
+        new_row = update_ansible_vars(version=release, dry_run=dry_run)
         logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `node`: %s", e)
     # endregion
 
     # region Updates the release.ini file with the new release number
-    ret = update_release_ini(path=release_file, version=version, dry_run=dry_run)
+    ret = update_release_ini(path=release_file, version=release, dry_run=dry_run)
     if ret != 0:
         return ret
     # endregion
@@ -117,7 +117,7 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True
 
 def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
-    Updates the sonar-project.properties file with the new version number
+    Updates the sonar-project.properties file with the new release number
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -135,7 +135,7 @@ def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[boo
 
 def update_docs_conf(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
-    Updates the Sphinx conf.py file with the new version number
+    Updates the Sphinx conf.py file with the new release number
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -162,7 +162,7 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: Optional[bool] = Fa
 
 def update_node_package(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
-    Updates the nodejs package file with the new version number
+    Updates the nodejs package file with the new release number
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -178,7 +178,7 @@ def update_node_package(version: Tuple[str, str, str], dry_run: Optional[bool] =
 
 def update_ansible_vars(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
-    Updates the ansible project variables file with the new version number
+    Updates the ansible project variables file with the new release number
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -194,10 +194,10 @@ def update_ansible_vars(version: Tuple[str, str, str], dry_run: Optional[bool] =
 
 def update_release_ini(path: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
-    Updates the release.ini file with the new version number
+    Updates the release.ini file with the new release number
 
     :param path: Release file path
-    :param version: version number, as (<major>, <minor>, <release>)
+    :param version: release number, as (<major>, <minor>, <release>)
     :param dry_run: If `True`, the operation WILL NOT be performed
     :return: Updated lines
     """

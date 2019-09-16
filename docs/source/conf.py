@@ -23,7 +23,7 @@ project = 'bump-release'
 copyright = '2019, François GUÉRIN <fguerin@ville-tourcoing.fr>'
 author = 'François GUÉRIN <fguerin@ville-tourcoing.fr>'
 
-# The full version, including alpha/beta/rc tags
+# The full release, including alpha/beta/rc tags
 release = '0.3.0'
 
 

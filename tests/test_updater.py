@@ -89,7 +89,7 @@ def test_update_docs(config, version):
 
     new_row = helpers.update_file(path=path, pattern=version_pattern, template=version_format,
                                   release_number=version, dry_run=True)
-    assert new_row.strip() == "version = \"1.1\"", "DOCS: Versions does not match"
+    assert new_row.strip() == "release = \"1.1\"", "DOCS: Versions does not match"
 
 
 def test_update_node_packages(config, version):
@@ -103,7 +103,7 @@ def test_update_node_packages(config, version):
 
 def test_update_ansible(config, version):
     str_path = config.get("ansible", "path", fallback="vars.yml")
-    key = config.get("ansible", "key", fallback="git.version")
+    key = config.get("ansible", "key", fallback="git.release")
     assert str_path is not None
     path = MODULE_PATH / str_path
     new_content = helpers.updates_yml_file(path=path, version=version, key=key)
