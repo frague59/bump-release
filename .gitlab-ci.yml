@@ -8,10 +8,7 @@ stages:
 variables:
   SONAR_DEBUG: 1
   TESTS_DEBUG: 1
-
-before_script:
-  - apt-get update
-  - apt-get install --yes -qqq zip
+  DOCS_DEBUG: 1
 
 tests:
   stage: build
@@ -37,13 +34,13 @@ sonar:
     SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
     - apt-get update
-    - apt-get install --yes -qqq openjdk-11-jdk-headless
+    - apt-get install --yes -qqq openjdk-11-jdk-headless zip
     - pip --cache-dir .pip/ install pylint
     - test ${SONAR_DEBUG} -eq 1 && ls -la
     # Installs sonar-runner ZIP file
     - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
     # yamllint disable-line rule:line-length
-    - wget --no-verbose https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
+    - wget --no-verbose "${SONAR_SCANNER_URL}"
     # yamllint disable-line rule:max-spaces-ahter
     - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
     - fi
@@ -59,6 +56,10 @@ sonar:
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
-      - pip/
+      - .pip/
   tags:
     - python3.6
+
+  pages:
+    stage: build
+
