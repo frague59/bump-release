@@ -2,6 +2,8 @@
 """
 Update release numbers in various places, according to a release.ini file places at the project root
 """
+import os
+
 import click
 import configparser
 import logging
@@ -35,6 +37,8 @@ def bump_release(
     :return: 0 if no error...
     """
     logging.info("Current config file: %s", release_file)
+    if release_file is None:
+        release_file = Path(os.getcwd()) / "release.ini"
 
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
@@ -85,33 +89,35 @@ def bump_release(
     return 0
 
 
-def update_main_file(
-        path: str, version: Tuple[str, str, str], dry_run: bool = True
+def update_main_file(version: Tuple[str, str, str], dry_run: bool = True
 ) -> str:
     """
     Updates the main django settings file, or a python script with
 
-    :param path: main file path
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
-    :return: Nothing
+    :return: changed string
     """
-    pattern = helpers.RELEASE_CONFIG.get("main_project", "pattern", fallback=helpers.MAIN_PROJECT_PATTERN)
-    template = helpers.RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)
-
+    try:
+        path = helpers.RELEASE_CONFIG.get("main_project", "path")
+        pattern = helpers.RELEASE_CONFIG.get("main_project", "pattern", fallback=helpers.MAIN_PROJECT_PATTERN)
+        template = helpers.RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)
+    except configparser.Error as e:
+        raise helpers.NothingToDoException(e)
     return helpers.update_file(path=path, pattern=pattern, template=template, release_number=version,
                                dry_run=dry_run)
 
 
-def update_sonar_properties(path: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
+def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
     Updates the sonar-project.properties file with the new version number
-    :param path:
-    :param version:
-    :param dry_run:
-    :return:
+
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
     """
     try:
+        path = helpers.RELEASE_CONFIG.get("sonar", "path")
         pattern = helpers.RELEASE_CONFIG.get("sonar", "pattern", fallback=helpers.SONAR_PATTERN)
         template = helpers.RELEASE_CONFIG.get("sonar", "template", fallback=helpers.SONAR_TEMPLATE)
     except configparser.Error as e:
@@ -120,16 +126,16 @@ def update_sonar_properties(path: str, version: Tuple[str, str, str], dry_run: O
                                dry_run=dry_run)
 
 
-def update_docs_conf(path: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
+def update_docs_conf(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
     Updates the Sphinx conf.py file with the new version number
 
-    :param path: File path
-    :param version: version number, as (<major>, <minor>, <release>)
-    :param dry_run: If `True`, the operation WILL NOT be performed
-    :return: Updated lines
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
     """
     try:
+        path = helpers.RELEASE_CONFIG.get("docs", "path")
         pattern_release = helpers.RELEASE_CONFIG.get("docs", "pattern_release", fallback=helpers.DOCS_RELEASE_PATTERN)
         template_release = helpers.RELEASE_CONFIG.get("docs", "template_release", fallback=helpers.DOCS_RELEASE_FORMAT)
 
@@ -147,33 +153,32 @@ def update_docs_conf(path: str, version: Tuple[str, str, str], dry_run: Optional
     return update_release + update_version
 
 
-def update_node_package(path: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
+def update_node_package(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
     Updates the nodejs package file with the new version number
 
-    :param path: File path
-    :param version: version number, as (<major>, <minor>, <release>)
-    :param dry_run: If `True`, the operation WILL NOT be performed
-    :return: Updated lines
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
     """
-
     try:
+        path = helpers.RELEASE_CONFIG.get("node", "path")
         key = helpers.RELEASE_CONFIG.get("node", "key", fallback=helpers.NODE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
     return helpers.update_node_packages(path=path, version=version, key=key, dry_run=dry_run)
 
 
-def update_ansible_vars(path: str,  version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
+def update_ansible_vars(version: Tuple[str, str, str], dry_run: Optional[bool] = False) -> str:
     """
     Updates the ansible project variables file with the new version number
 
-    :param path: File path
-    :param version: version number, as (<major>, <minor>, <release>)
-    :param dry_run: If `True`, the operation WILL NOT be performed
-    :return: Updated lines
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
     """
     try:
+        path = helpers.RELEASE_CONFIG.get("ansible", "path")
         key = helpers.RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
@@ -184,7 +189,7 @@ def update_release_ini(path: str, version: Tuple[str, str, str], dry_run: Option
     """
     Updates the release.ini file with the new version number
 
-    :param path: File path
+    :param path: Release file path
     :param version: version number, as (<major>, <minor>, <release>)
     :param dry_run: If `True`, the operation WILL NOT be performed
     :return: Updated lines
