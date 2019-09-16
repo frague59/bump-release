@@ -21,7 +21,7 @@ DEBUG = True
 @click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
 @click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
 @click.argument("version")
-def update_files(
+def bump_release(
         version: Tuple[str, str, str],
         release_file: Optional[str] = None,
         dry_run: bool = True,
@@ -39,7 +39,7 @@ def update_files(
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
         new_row = update_main_file(version=version, dry_run=dry_run)
-        logger.debug("update_files() `main_project`: new_row = %s", new_row)
+        logger.debug("bump_release() `main_project`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `main_project`: %s", e)
     # endregion
@@ -47,7 +47,7 @@ def update_files(
     # region Updates sonar-scanner properties
     try:
         new_row = update_sonar_properties(version=version, dry_run=dry_run)
-        logger.debug("update_files() `sonar`: new_row = %s", new_row)
+        logger.debug("bump_release() `sonar`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `sonar`: %s", e)
     # endregion
@@ -55,7 +55,7 @@ def update_files(
     # region Updates sphinx file
     try:
         new_row = update_docs_conf(version=version, dry_run=dry_run)
-        logger.debug("update_files() `docs`: new_row = %s", new_row)
+        logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `docs`: %s", e)
     # endregion
@@ -63,7 +63,7 @@ def update_files(
     # region Updates node packages file
     try:
         new_row = update_node_package(version=version, dry_run=dry_run)
-        logger.debug("update_files() `docs`: new_row = %s", new_row)
+        logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `node`: %s", e)
     # endregion
@@ -71,7 +71,7 @@ def update_files(
     # region Updates YAML file
     try:
         new_row = update_ansible_vars(version=version, dry_run=dry_run)
-        logger.debug("update_files() `docs`: new_row = %s", new_row)
+        logger.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
         logger.info("No release section for `node`: %s", e)
     # endregion
