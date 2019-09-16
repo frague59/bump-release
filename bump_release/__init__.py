@@ -14,14 +14,18 @@ from bump_release import helpers
 
 logger = logging.getLogger("bump_release")
 
-__version__ = VERSION = "0.3.0"
 
+# region Constants
+__version__ = VERSION = "0.3.0"
 DEBUG = True
+RELEASE_CONFIG = None
+# endregion Constants
 
 
 @click.command()
 @click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
 @click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
+@click.version_option("-v", "--version", version="__version__")
 @click.argument("version")
 def bump_release(
         version: Tuple[str, str, str],
@@ -37,9 +41,11 @@ def bump_release(
     :return: 0 if no error...
     """
     # Loads the release.ini file
+    global RELEASE_CONFIG
+
     if release_file is None:
         release_file = Path(os.getcwd()) / "release.ini"
-    helpers.load_release_file(release_file=release_file)
+    RELEASE_CONFIG = helpers.load_release_file(release_file=release_file)
 
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
@@ -100,9 +106,9 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True
     :return: changed string
     """
     try:
-        path = helpers.RELEASE_CONFIG.get("main_project", "path")
-        pattern = helpers.RELEASE_CONFIG.get("main_project", "pattern", fallback=helpers.MAIN_PROJECT_PATTERN)
-        template = helpers.RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)
+        path = RELEASE_CONFIG.get("main_project", "path")
+        pattern = RELEASE_CONFIG.get("main_project", "pattern", fallback=helpers.MAIN_PROJECT_PATTERN)
+        template = RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
     return helpers.update_file(path=path, pattern=pattern, template=template, release_number=version,
@@ -118,9 +124,9 @@ def update_sonar_properties(version: Tuple[str, str, str], dry_run: Optional[boo
     :return: changed string
     """
     try:
-        path = helpers.RELEASE_CONFIG.get("sonar", "path")
-        pattern = helpers.RELEASE_CONFIG.get("sonar", "pattern", fallback=helpers.SONAR_PATTERN)
-        template = helpers.RELEASE_CONFIG.get("sonar", "template", fallback=helpers.SONAR_TEMPLATE)
+        path = RELEASE_CONFIG.get("sonar", "path")
+        pattern = RELEASE_CONFIG.get("sonar", "pattern", fallback=helpers.SONAR_PATTERN)
+        template = RELEASE_CONFIG.get("sonar", "template", fallback=helpers.SONAR_TEMPLATE)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
     return helpers.update_file(path=path, pattern=pattern, template=template, release_number=version,
@@ -136,12 +142,12 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: Optional[bool] = Fa
     :return: changed string
     """
     try:
-        path = helpers.RELEASE_CONFIG.get("docs", "path")
-        pattern_release = helpers.RELEASE_CONFIG.get("docs", "pattern_release", fallback=helpers.DOCS_RELEASE_PATTERN)
-        template_release = helpers.RELEASE_CONFIG.get("docs", "template_release", fallback=helpers.DOCS_RELEASE_FORMAT)
+        path = RELEASE_CONFIG.get("docs", "path")
+        pattern_release = RELEASE_CONFIG.get("docs", "pattern_release", fallback=helpers.DOCS_RELEASE_PATTERN)
+        template_release = RELEASE_CONFIG.get("docs", "template_release", fallback=helpers.DOCS_RELEASE_FORMAT)
 
-        pattern_version = helpers.RELEASE_CONFIG.get("docs", "pattern_version", fallback=helpers.DOCS_VERSION_PATTERN)
-        template_version = helpers.RELEASE_CONFIG.get("docs", "re", fallback=helpers.DOCS_VERSION_FORMAT)
+        pattern_version = RELEASE_CONFIG.get("docs", "pattern_version", fallback=helpers.DOCS_VERSION_PATTERN)
+        template_version = RELEASE_CONFIG.get("docs", "re", fallback=helpers.DOCS_VERSION_FORMAT)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
 
@@ -163,8 +169,8 @@ def update_node_package(version: Tuple[str, str, str], dry_run: Optional[bool] =
     :return: changed string
     """
     try:
-        path = helpers.RELEASE_CONFIG.get("node", "path")
-        key = helpers.RELEASE_CONFIG.get("node", "key", fallback=helpers.NODE_KEY)
+        path = RELEASE_CONFIG.get("node", "path")
+        key = RELEASE_CONFIG.get("node", "key", fallback=helpers.NODE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
     return helpers.update_node_packages(path=path, version=version, key=key, dry_run=dry_run)
@@ -179,8 +185,8 @@ def update_ansible_vars(version: Tuple[str, str, str], dry_run: Optional[bool] =
     :return: changed string
     """
     try:
-        path = helpers.RELEASE_CONFIG.get("ansible", "path")
-        key = helpers.RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)
+        path = RELEASE_CONFIG.get("ansible", "path")
+        key = RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
     return helpers.updates_yml_file(path=path, version=version, key=key, dry_run=dry_run)
