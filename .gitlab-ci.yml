@@ -61,10 +61,10 @@ pages:
     - pip --cache-dir .pip/ install -r requirements.txt
     - pip --cache-dir .pip/ install -r requirements-docs.txt
   script: |
-    - cd ./docs
-    - make html
+    cd ./docs
+    make html
     # Copy built files to /public
-    - mv build/html/ ../public/
+    mv build/html/ ../public/
   artifacts:
     paths:
       - public
