@@ -1,12 +1,6 @@
 # coding: utf-8
 """
 Update release numbers in various places, according to a release.ini file places at the project root
-+ [sonar]
-  path = sonar-project.properties # Mandatory
-  pattern = "^sonar.projectVersion=([.\\d]+)$"
-  template = "sonar.projectVersion={major}.{minor}\n"
-+ []
-+ INI: release.ini
 """
 import click
 import configparser
@@ -22,7 +16,11 @@ __version__ = VERSION = "0.3.0"
 
 DEBUG = True
 
+
 @click.command()
+@click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
+@click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
+@click.argument("version")
 def update_files(
         version: Tuple[str, str, str],
         release_file: Optional[str] = None,
@@ -31,7 +29,7 @@ def update_files(
     """
     Updates the files according to the release.ini file
 
-    :param version: Number
+    :param version: Version number, as "X.X.X"
     :param release_file: path to the release.ini config file
     :param dry_run: If `True`, no operation performed
     :return: 0 if no error...
@@ -92,11 +90,6 @@ def update_main_file(
 ) -> str:
     """
     Updates the main django settings file, or a python script with
-
-    .. code-block:: python
-       ...
-       __version__ = VERSION = "<major>.<minor>.<release>"
-       ...
 
     :param path: main file path
     :param version: Release number tuple (major, minor, release)
