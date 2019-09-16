@@ -1,6 +1,5 @@
 ---
 # CI Integration
-
 image: python:3.7-buster
 
 stages:
@@ -9,7 +8,6 @@ stages:
 variables:
   SONAR_DEBUG: 1
   TESTS_DEBUG: 1
-  CI_DEBUG_TRACE: "true"
 
 before_script:
   - apt-get update
@@ -20,6 +18,7 @@ tests:
   before_script:
     - pip --cache-dir .pip install -r requirements-tests.txt
   script: |
+    export PYTHONPATH=${PYTHONPATH}:bump-release
     pytest --cov=bump_release ./tests
   cache:
     paths:
@@ -36,7 +35,7 @@ sonar:
     SONAR_HOST: "http://sonarqube.ville.tg/"
     SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
-    - apt-get install --yes -qqq openjdk-11-jdk-headless zip
+    - apt-get install --yes -qqq openjdk-11-jdk-headless
     - pip --cache-dir .pip/ install pylint
     - test ${SONAR_DEBUG} -eq 1 && ls -la
     # Installs sonar-runner ZIP file
