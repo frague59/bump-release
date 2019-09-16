@@ -25,7 +25,7 @@ RELEASE_CONFIG = None
 @click.command()
 @click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
 @click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
-@click.version_option("-v", "--release", version="__version__")
+@click.version_option(version=__version__)
 @click.argument("release")
 def bump_release(
         release: Tuple[str, str, str],
