@@ -36,6 +36,7 @@ sonar:
     SONAR_HOST: "http://sonarqube.ville.tg/"
     SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
+    - apt-get update
     - apt-get install --yes -qqq openjdk-11-jdk-headless
     - pip --cache-dir .pip/ install pylint
     - test ${SONAR_DEBUG} -eq 1 && ls -la
