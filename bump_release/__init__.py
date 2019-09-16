@@ -36,9 +36,10 @@ def bump_release(
     :param dry_run: If `True`, no operation performed
     :return: 0 if no error...
     """
-    logging.info("Current config file: %s", release_file)
+    # Loads the release.ini file
     if release_file is None:
         release_file = Path(os.getcwd()) / "release.ini"
+    helpers.load_release_file(release_file=release_file)
 
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
