@@ -8,10 +8,22 @@ __main__ for :mod:`bump_release` application
 
 """
 import sys
-import logging
-from bump_release import bump_release
+from pathlib import Path
 
-__author__ = 'fguerin'
-logger = logging.getLogger('bump_release.__main__')
+import bump_release
+from bump_release import helpers
 
-bump_release()
+__author__ = "fguerin"
+
+if __name__ == "__main__":
+    bump_release.RELEASE_FILE = Path.cwd() / "release.ini"
+    bump_release.RELEASE_CONFIG = helpers.load_release_file(
+        release_file=bump_release.RELEASE_FILE
+    )
+    result = bump_release.process_update(
+        release_file=bump_release.RELEASE_FILE,
+        release="0.4.4",
+        dry_run=True,
+        debug=False,
+    )
+    sys.exit(result)
