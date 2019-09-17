@@ -3,6 +3,7 @@
 Update release numbers in various places, according to a release.ini file places at the project root
 """
 import os
+import pprint
 
 import click
 import configparser
@@ -14,7 +15,7 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Constants
-__version__ = VERSION = "0.4.2"
+__version__ = VERSION = "0.4.4"
 RELEASE_CONFIG = None
 RELEASE_FILE = None
 # endregion Constants
@@ -116,8 +117,7 @@ def process_update(release: str, dry_run: bool, debug: bool = False):
     return 0
 
 
-def update_main_file(version: Tuple[str, str, str], dry_run: bool = True
-) -> str:
+def update_main_file(version: Tuple[str, str, str], dry_run: bool = True) -> str:
     """
     Updates the main django settings file, or a python script with
 
@@ -239,16 +239,19 @@ def update_release_ini(path: str, version: Tuple[str, str, str], dry_run: Option
     :return: Updated lines
     """
     parser = configparser.ConfigParser()
+    config = None
     with open(path, "r") as release_file:
-        parser.read(release_file)
+        config = parser.read(release_file)
+        logging.debug("update_release_ini() parser:\n%s", config)
 
-    parser.set("DEFAULT", "current_release", ".".join(version))
+    logging.debug("update_release_ini() parser.sections():\n%s", pprint.pformat(config.sections()))
+    config.set("DEFAULT", "current_release", ".".join(version))
 
     # Writes the output file
     if not dry_run:
         with open(path, "w+") as release_file_out:
-            parser.write(release_file_out)
+            config.write(release_file_out)
     # Build text output
     stream = StringIO()
-    parser.write(stream)
+    config.write(stream)
     return stream.getvalue()
