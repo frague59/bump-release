@@ -74,7 +74,6 @@ pages:
   tags:
     - python3.6
 
-
 deploy_staging:
   stage: build
   before_script:
@@ -87,8 +86,6 @@ deploy_staging:
       - .pip/
   tags:
     - python3.6
-
-
 
 deploy_prod:
   stage: build
