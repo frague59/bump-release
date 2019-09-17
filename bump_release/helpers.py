@@ -18,7 +18,7 @@ import yaml
 import json
 
 __author__ = 'fguerin'
-logger = logging.getLogger('bump_release.helpers')
+logging = logging.getLogger('bump_release.helpers')
 
 RELEASE_CONFIG = None
 BASE_DIR = os.getcwd()
@@ -178,7 +178,7 @@ def updates_yml_file(
         if _key == splited_key[-1] and not dry_run:
             node.update({_key: full_version})
         node = node.get(_key)
-    logger.debug("updates_yml_file() node value = %s", node)
+    logging.debug("updates_yml_file() node value = %s", node)
     new_content = yaml.dump(document)
     if not dry_run:
         with open(path, "w") as vars_file:

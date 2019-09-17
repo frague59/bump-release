@@ -11,14 +11,12 @@ from io import StringIO
 from pathlib import Path
 from typing import Tuple, Optional
 from bump_release import helpers
-
-logger = logging.getLogger("bump_release")
-
+from bump_release.helpers import split_version
 
 # region Constants
 __version__ = VERSION = "0.4.2"
-DEBUG = False
 RELEASE_CONFIG = None
+RELEASE_FILE = None
 # endregion Constants
 
 
@@ -29,7 +27,7 @@ RELEASE_CONFIG = None
 @click.version_option(version=__version__)
 @click.argument("release")
 def bump_release(
-        release: Tuple[str, str, str],
+        release: str,
         release_file: Optional[str] = None,
         dry_run: Optional[bool] = False,
         debug: Optional[bool] = False,
@@ -45,70 +43,74 @@ def bump_release(
     """
     # Loads the release.ini file
     global RELEASE_CONFIG
-    global DEBUG
-    DEBUG = debug
-    # Initialize the logger
-    if DEBUG:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-
+    global RELEASE_FILE
     if release_file is None:
-        release_file = Path(os.getcwd()) / "release.ini"
-    RELEASE_CONFIG = helpers.load_release_file(release_file=release_file)
-    version = helpers.split_version(release)
+        RELEASE_FILE = Path(os.getcwd()) / "release.ini"
+
+    RELEASE_CONFIG = helpers.load_release_file(release_file=RELEASE_FILE)
+    return process_update(release=release, dry_run=dry_run, debug=debug)
+
+
+def process_update(release: str, dry_run: bool, debug: bool = False):
+    version = split_version(release)
+
+    # Initialize the logging
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     # region Updates the main project (DJANGO_SETTINGS_MODULE file for django projects, __init__.py file...)
     try:
         new_row = update_main_file(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `main_project`: new_row = %s", new_row)
+        logging.debug("bump_release() `main_project`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `main_project`: %s", e)
+        logging.info("No release section for `main_project`: %s", e)
     # endregion
 
     # region Updates sonar-scanner properties
     try:
         new_row = update_sonar_properties(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `sonar`: new_row = %s", new_row)
+        logging.debug("bump_release() `sonar`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `sonar`: %s", e)
+        logging.info("No release section for `sonar`: %s", e)
     # endregion
 
     # region Updates setup.py file
     try:
         new_row = update_setup_file(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `docs`: new_row = %s", new_row)
+        logging.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `docs`: %s", e)
+        logging.info("No release section for `docs`: %s", e)
     # endregion
 
     # region Updates sphinx file
     try:
         new_row = update_docs_conf(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `docs`: new_row = %s", new_row)
+        logging.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `docs`: %s", e)
+        logging.info("No release section for `docs`: %s", e)
     # endregion
 
     # region Updates node packages file
     try:
         new_row = update_node_package(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `docs`: new_row = %s", new_row)
+        logging.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `node`: %s", e)
+        logging.info("No release section for `node`: %s", e)
     # endregion
 
     # region Updates YAML file
     try:
         new_row = update_ansible_vars(version=version, dry_run=dry_run)
-        logger.debug("bump_release() `docs`: new_row = %s", new_row)
+        logging.debug("bump_release() `docs`: new_row = %s", new_row)
     except helpers.NothingToDoException as e:
-        logger.info("No release section for `node`: %s", e)
+        logging.info("No release section for `node`: %s", e)
     # endregion
 
     # region Updates the release.ini file with the new release number
-    new_content = update_release_ini(path=release_file, version=version, dry_run=dry_run)
-    logger.debug("bump_release() `release.ini`: new_row = %s", new_content)
+    new_content = update_release_ini(path=RELEASE_FILE, version=version, dry_run=dry_run)
+    logging.debug("bump_release() `release.ini`: new_row = %s", new_content)
     # endregion
 
     return 0
