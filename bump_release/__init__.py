@@ -17,20 +17,22 @@ logger = logging.getLogger("bump_release")
 
 # region Constants
 __version__ = VERSION = "0.4.2"
-DEBUG = True
+DEBUG = False
 RELEASE_CONFIG = None
 # endregion Constants
 
 
 @click.command()
 @click.option("-r", "--release-file", "release_file", help="Release file path, default `./release.ini`")
-@click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files")
+@click.option("-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files", default=False)
+@click.option("-d", "--debug", "debug", is_flag=True, help="If set, more traces are printed for users", default=False)
 @click.version_option(version=__version__)
 @click.argument("release")
 def bump_release(
         release: Tuple[str, str, str],
         release_file: Optional[str] = None,
-        dry_run: bool = True,
+        dry_run: Optional[bool] = False,
+        debug: Optional[bool] = False,
 ):
     """
     Updates the files according to the release.ini file
@@ -38,10 +40,18 @@ def bump_release(
     :param release: Version number, as "X.X.X"
     :param release_file: path to the release.ini config file
     :param dry_run: If `True`, no operation performed
+    :param debug: If `True`, more traces !
     :return: 0 if no error...
     """
     # Loads the release.ini file
     global RELEASE_CONFIG
+    global DEBUG
+    DEBUG = debug
+    # Initialize the logger
+    if DEBUG:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
 
     if release_file is None:
         release_file = Path(os.getcwd()) / "release.ini"
