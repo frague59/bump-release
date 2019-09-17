@@ -19,7 +19,6 @@ setuptools.setup(
     description="Updates various version numbers for python projects",
     long_description=long_description,
     long_description_content_type="text/markdown",
-
     py_modules=["bump_release"],
     install_requires=[
         "Click",

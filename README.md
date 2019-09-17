@@ -1,9 +1,8 @@
-# Updates the release numbers of projects 
+# Updates the release numbers for a projects 
 
 [![pipeline status](http://gitlab.ville.tg/fguerin/bump-release/badges/master/pipeline.svg)](http://gitlab.ville.tg/fguerin/bump-release/commits/master)
 
 [![coverage report](http://gitlab.ville.tg/fguerin/bump-release/badges/master/coverage.svg)](http://gitlab.ville.tg/fguerin/bump-release/commits/master)
-
 
 This script uses the release.ini file placed at the root of the project.
 
