@@ -6,6 +6,7 @@ import logging
 import pytest
 from pathlib import Path
 from typing import Union
+import bump_release
 from bump_release import helpers
 
 logger = logging.getLogger("tests")
@@ -23,7 +24,7 @@ def config():
 
 @pytest.fixture
 def version():
-    splited_version = helpers.split_version("1.1.1")
+    splited_version = helpers.split_version("0.0.2")
     return splited_version
 
 
@@ -44,6 +45,7 @@ def test_load_release_file(config):
     assert config.has_option("sonar", "path"), "No `sonar.path` value in release.ini file"
     assert config.has_option("docs", "path"), "No `docs.path` value in release.ini file"
     assert config.has_option("ansible", "path"), "No `ansible.path` value in release.ini file"
+    assert config.has_option("setup", "path"), "No `setup.path` value in release.ini file"
 
 
 def test_version():
@@ -54,48 +56,48 @@ def test_version():
     splited_version = helpers.split_version("1.1.1a")
     assert splited_version == ("1", "1", "1a"), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
     splited_version = helpers.split_version("1.1.1b")
-    assert splited_version == ("1", "1", "1b"), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
+    assert splited_version == ("1", "1", "1b"), "Version for `0.0.2b` MUST BE ('1', '1', '1b')"
 
 
 def test_update_main_project(config, version):
     str_path = config["main_project"].get("path")
     assert str_path is not None
-    path = MODULE_PATH / str_path
+    path = Path(str_path)
     new_row = helpers.update_file(path=path, pattern=helpers.MAIN_PROJECT_PATTERN, template=helpers.MAIN_PROJECT_TEMPLATE,
                                   version=version, dry_run=True)
-    assert new_row.strip() == "__version__ = VERSION = \"1.1.1\"", "MAIN: Versions does not match"
+    assert new_row.strip() == "__version__ = VERSION = \"0.0.2\"", "MAIN: Versions does not match"
 
 
 def test_update_sonar_properties(config, version):
     str_path = config["sonar"].get("path")
     assert str_path is not None
-    path = MODULE_PATH / str_path
+    path = Path(str_path)
     new_row = helpers.update_file(path=path, pattern=helpers.SONAR_PATTERN, template=helpers.SONAR_TEMPLATE,
                                   version=version, dry_run=True)
-    assert new_row.strip() == "sonar.projectVersion=1.1", "SONAR: Versions does not match"
+    assert new_row.strip() == "sonar.projectVersion=0.0", "SONAR: Versions does not match"
 
 
 def test_update_docs(config, version):
     str_path = config.get("docs", "path")
     assert str_path is not None
-    path = MODULE_PATH / str_path
+    path = Path(str_path)
     version_pattern = config.get("docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN)
     release_pattern = config.get("docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN)
     version_format = config.get("docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT)
     release_format = config.get("docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT)
     new_row = helpers.update_file(path=path, pattern=release_pattern, template=release_format,
                                   version=version, dry_run=True)
-    assert new_row.strip() == "release = \"1.1.1\"", "DOCS: Versions does not match"
+    assert new_row.strip() == "release = \"0.0.2\"", "DOCS: Versions does not match"
 
     new_row = helpers.update_file(path=path, pattern=version_pattern, template=version_format,
                                   version=version, dry_run=True)
-    assert new_row.strip() == "release = \"1.1\"", "DOCS: Versions does not match"
+    assert new_row.strip() == "release = \"0.0\"", "DOCS: Versions does not match"
 
 
 def test_update_node_packages(config, version):
     str_path = config.get("node", "path", fallback=str(Path(__file__).parent / "fixtures" / "assets" / "package.json"))
     assert str_path is not None
-    path = MODULE_PATH / str_path
+    path = Path(str_path)
     key = config.get("node", "key", fallback=helpers.NODE_KEY)
     new_content = helpers.update_node_packages(path=path, version=version, key=key)
     assert new_content, "NODE: New content cannot be empty"
@@ -105,6 +107,37 @@ def test_update_ansible(config, version):
     str_path = config.get("ansible", "path", fallback="vars.yml")
     key = config.get("ansible", "key", fallback="git.release")
     assert str_path is not None
-    path = MODULE_PATH / str_path
+    path = Path(str_path)
     new_content = helpers.updates_yml_file(path=path, version=version, key=key)
     assert new_content, "ANSIBLE: New content cannot be empty"
+
+
+def test_full_update_ansible(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_ansible_vars(version=version, dry_run=True)
+    assert result is not None
+
+
+def test_full_docs_conf(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_docs_conf(version=version, dry_run=True)
+    assert result is not None
+
+
+def test_full_main_project(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_main_file(version=version, dry_run=True)
+    assert result is not None
+
+
+def test_full_node_package(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_node_package(version=version, dry_run=True)
+    assert result is not None
+
+
+def test_full_sonar_properties(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_node_package(version=version, dry_run=True)
+    assert result is not None
+

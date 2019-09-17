@@ -7,9 +7,7 @@ __main__ for :mod:`bump_release` application
 :modulename: bump_release.__main__
 
 """
-import os
 import sys
-import logging
 from pathlib import Path
 
 import bump_release
