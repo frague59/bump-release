@@ -7,6 +7,7 @@
 
 This script uses the release.ini file placed at the root of the project.
 
+## release.ini
 
 ```ini
 [DEFAULT]
@@ -36,5 +37,56 @@ release_format = 'release = "{major}.{minor}.{release}"\n' # Optional
 [ansible]
 path = <project>/../ansible/prod/vars/vars.yml"
 key = "git.version" # Optional
+
+[setup]
+path = <project>/setup.py
+pattern = "^\s*version=['\"]([.\d]+)['\"],$"
+template = "    version=\"{major}.{minor}.{release}\","
+
+```
+
+## Version numbers that can be updated
+
++ main project version
++ node package.json 
++ sonar properties
++ sphinx docs 
++ ansible variables in a vars file
++ setup.py 
+
+## Installation 
+
+```bash
+$ pip install --user bump-release
+``` 
+
+## Usage
+
+```bash
+$ cd <project_root>
+$ cat release.ini
+[DEFAULT}
+current_release = 0.0.1
+
+[main_project]
+path = "foo/__init__.py"
+
+[sonar]
+path = "sonar-project.properties"
+...
+$ cat foo/__init__.py
+...
+__version__ = VERSION = "0.0.1"
+...
+$ bump_release 0.0.2
+...
+$ cat release.ini
+[DEFAULT}
+current_release = 0.0.2
+...
+$ cat foo/__init__.py
+...
+__version__ = VERSION = "0.0.2"
+...
 
 ```

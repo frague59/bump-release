@@ -16,7 +16,7 @@ logger = logging.getLogger("bump_release")
 
 
 # region Constants
-__version__ = VERSION = "0.4.0"
+__version__ = VERSION = "0.4.1"
 DEBUG = True
 RELEASE_CONFIG = None
 # endregion Constants
@@ -226,17 +226,17 @@ def update_release_ini(path: str, version: Tuple[str, str, str], dry_run: Option
     :param dry_run: If `True`, the operation WILL NOT be performed
     :return: Updated lines
     """
-    config = configparser.ConfigParser()
+    parser = configparser.ConfigParser()
     with open(path, "r") as release_file:
-        config.read(release_file)
-    config.set("DEFAULT", "current_release", ".".join(version))
+        parser.read(release_file)
+
+    parser.set("DEFAULT", "current_release", ".".join(version))
 
     # Writes the output file
     if not dry_run:
-        with open(path, "w") as release_file_out:
-            config.write(release_file_out)
-
+        with open(path, "w+") as release_file_out:
+            parser.write(release_file_out)
     # Build text output
     stream = StringIO()
-    config.write(stream)
+    parser.write(stream)
     return stream.getvalue()
