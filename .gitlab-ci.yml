@@ -71,6 +71,24 @@ pages:
   cache:
     paths:
       - .pip/
-      - docs/source/
   tags:
     - python3.6
+
+deploy:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip/ install requirements-deploy.txt
+  script: |
+    python3 setup.py sdist bdist_wheel
+    python3 -m twine upload dist/*
+  only:
+    - master
+    - tags
+  cache:
+    paths:
+      - .pip/
+  tags:
+    - python3.6
+
+
+
