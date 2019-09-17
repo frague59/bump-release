@@ -74,13 +74,34 @@ pages:
   tags:
     - python3.6
 
-deploy:
+deploy_staging:
   stage: build
   before_script:
-    - pip --cache-dir .pip/ install requirements-deploy.txt
+    - pip --cache-dir .pip/ install -r requirements-deploy.txt
   script: |
     python3 setup.py sdist bdist_wheel
-    python3 -m twine upload dist/*
+    python3 -m twine upload \
+      --repository-url https://test.pypi.org/legacy/ \
+      --username "$USERNAME_STAGING" \
+      --password "$PASSWORD_STAGING" \
+      --verbose \
+      dist/*
+  cache:
+    paths:
+      - .pip/
+  tags:
+    - python3.6
+
+deploy_prod:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip/ install -r requirements-deploy.txt
+  script: |
+    python3 setup.py sdist bdist_wheel
+    python3 -m twine upload \
+      --username "$USERNAME" \
+      --password "$PASSWORD" \
+      dist/*
   only:
     - master
     - tags
