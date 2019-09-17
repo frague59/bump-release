@@ -12,13 +12,12 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 import configparser
 import yaml
 import json
 
-__author__ = 'fguerin'
-logger = logging.getLogger('bump_release.helpers')
+__author__ = "fguerin"
 
 RELEASE_CONFIG = None
 BASE_DIR = os.getcwd()
@@ -40,7 +39,7 @@ SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}\n"
 
 # setup.py file
 SETUP_PATTERN = r"^\s*version=['\"]([.\d\w]+)['\"],$"
-SETUP_TEMPLATE = "    version=\"{major}.{minor}.{release}\",\n"
+SETUP_TEMPLATE = '    version="{major}.{minor}.{release}",\n'
 
 
 # Sphinx (re search and replace)
@@ -49,8 +48,12 @@ DOCS_RELEASE_PATTERN = r"^release\s+=\s+[\"']([.\d\w]+)[\"']$"
 DOCS_VERSION_FORMAT = 'release = "{major}.{minor}"\n'
 DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
 
+RELEASE_INI_PATTERN = r"^current_release\s*=\s*['\"]?([.\d\w]+)['\"]?$"
+RELEASE_INI_TEMPLATE = "current_release = {major}.{minor}.{release}\n"
+
 
 # endregion Constants
+
 
 def load_release_file(release_file: Union[Path, str]) -> configparser.ConfigParser:
     """
@@ -84,8 +87,13 @@ def split_version(version: str) -> Tuple[str, str, str]:
         return major, minor, release
 
 
-def update_file(path: str, pattern: str, template: str, version: Tuple[str, str, str],
-                dry_run: bool = False) -> str:
+def update_file(
+    path: Path,
+    pattern: str,
+    template: str,
+    version: Tuple[str, str, str],
+    dry_run: Optional[bool] = False,
+) -> Optional[str]:
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
     with `pattern` with `version_format` formatted according to `release`.
@@ -102,20 +110,26 @@ def update_file(path: str, pattern: str, template: str, version: Tuple[str, str,
 
     old_row, new_row = None, None
     counter = None
-    with open(path, "r") as ifile:
+    with path.open(mode="r") as ifile:
         content_lines = ifile.readlines()
     new_content = deepcopy(content_lines)
 
     for counter, row in enumerate(content_lines):
         searched = version_re.search(row)
         if searched:
-            logging.debug("update_file() a *MATCHING* row has been found:\n%d %s", counter, row)
+            logging.debug(
+                "update_file() a *MATCHING* row has been found:\n%d %s",
+                counter,
+                row.strip(),
+            )
             old_row = deepcopy(row)
             new_row = template.format(major=major, minor=minor, release=release)
             break
 
     if old_row and new_row:
-        logging.info("update_file() old_row:\n%s\nnew_row:\n%s", old_row, new_row)
+        logging.info(
+            "update_file() old_row:\n%s\nnew_row:\n%s", old_row.strip(), new_row.strip()
+        )
 
     if dry_run:
         logging.info("update_file() No operation performed, dry_run = %s", dry_run)
@@ -123,7 +137,7 @@ def update_file(path: str, pattern: str, template: str, version: Tuple[str, str,
 
     if new_row and counter is not None:
         new_content[counter] = new_row
-        with open(path, "w") as output_file:
+        with path.open(mode="w") as output_file:
             output_file.writelines(new_content)
         logging.info('update_file() "%s" updated.', path)
         return new_row
@@ -132,10 +146,10 @@ def update_file(path: str, pattern: str, template: str, version: Tuple[str, str,
 
 
 def update_node_packages(
-        path: str,
-        version: Tuple[str, str, str],
-        key: str = NODE_KEY,
-        dry_run: bool = False,
+    path: Path,
+    version: Tuple[str, str, str],
+    key: str = NODE_KEY,
+    dry_run: bool = False,
 ):
     """
     Updates the package.json file
@@ -147,41 +161,40 @@ def update_node_packages(
     :return: Nothing
     """
     try:
-        with open(path, "r") as package_file:
+        with path.open(mode="r") as package_file:
             package = json.loads(package_file.read())
         new_package = deepcopy(package)
         new_package[key] = ".".join(version)
         updated = json.dumps(new_package, indent=4)
         if not dry_run:
-            with open(path, "w") as package_file:
+            with path.open(mode="w") as package_file:
                 package_file.write(updated)
         return updated
     except IOError as ioe:
         raise UpdateException(
-            "update_node_packages() Unable to perform %s update:" % package_file,
-            ioe,
+            "update_node_packages() Unable to perform %s update:" % package_file, ioe
         )
 
 
 def updates_yml_file(
-        path: str,
-        version: Tuple[str, str, str],
-        key: str = NODE_KEY,
-        dry_run: bool = False,
+    path: Path,
+    version: Tuple[str, str, str],
+    key: str = NODE_KEY,
+    dry_run: bool = False,
 ) -> str:
     splited_key = key.split(".")
     full_version = ".".join(version)
-    with open(path, "r") as vars_file:
+    with path.open(mode="r") as vars_file:
         document = yaml.load(vars_file, Loader=yaml.FullLoader)
     node = document
     for _key in splited_key:
         if _key == splited_key[-1] and not dry_run:
             node.update({_key: full_version})
         node = node.get(_key)
-    logger.debug("updates_yml_file() node value = %s", node)
+    logging.debug("updates_yml_file() node value = %s", node)
     new_content = yaml.dump(document)
     if not dry_run:
-        with open(path, "w") as vars_file:
+        with path.open(mode="w") as vars_file:
             vars_file.write(new_content)
     return new_content
 

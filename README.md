@@ -14,32 +14,44 @@ current_release = 0.1.0  # Current version of the projects
 
 [main_project]
 path = <project>/settings/base.py
-pattern = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$" # Optional
-template = '__version__ = VERSION = "{major}.{minor}.{release}"\n' # Optional
+# Optional pattern, default is...
+pattern = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
+# Optional template, default is...
+template = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
 
 [node_module]
 path = <project>/assets/package.json
-key = "version"   # Optional
+# Optional key, default is...
+key = "version"
 
 [sonar]
 path = ./sonar-project.properties
-pattern = r"^sonar.projectVersion=([.\d]+)$" # Optional
-template = "sonar.projectVersion={major}.{minor}\n" # Optional
+# Optional pattern, default is...
+pattern = r"^sonar.projectVersion=([.\d]+)$"
+# Optional template, default is...
+template = "sonar.projectVersion={major}.{minor}\n"
 
 [docs]
 path = <project>/../docs/source/conf.py
-version_pattern = r"^version\s+=\s+[\"']([.\d]+)[\"']$" # Optional
-version_format = 'version = "{major}.{minor}"\n' # Optional
-release_pattern = r"^release\s+=\s+[\"']([.\d]+)[\"']$" # Optional
-release_format = 'release = "{major}.{minor}.{release}"\n' # Optional
+# Optional pattern, default is...
+version_pattern = r"^version\s+=\s+[\"']([.\d]+)[\"']$"
+# Optional template, default is...
+version_format = 'version = "{major}.{minor}"\n'
+# Optional pattern, default is...
+release_pattern = r"^release\s+=\s+[\"']([.\d]+)[\"']$"
+# Optional template, default is...
+release_format = 'release = "{major}.{minor}.{release}"\n'
 
 [ansible]
 path = <project>/../ansible/prod/vars/vars.yml"
-key = "git.version" # Optional
+# Optional key - The script searches for the "git" root key, and then for "version" sub-key 
+key = "git.version"
 
 [setup]
 path = <project>/setup.py
+# Optional pattern, default is...
 pattern = "^\s*version=['\"]([.\d]+)['\"],$"
+# Optional template, default is...
 template = "    version=\"{major}.{minor}.{release}\","
 
 ```
