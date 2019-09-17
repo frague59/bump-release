@@ -16,7 +16,7 @@ logger = logging.getLogger("bump_release")
 
 
 # region Constants
-__version__ = VERSION = "0.4.1"
+__version__ = VERSION = "0.4.2"
 DEBUG = True
 RELEASE_CONFIG = None
 # endregion Constants
