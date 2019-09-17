@@ -1,50 +1,94 @@
 ---
 # CI Integration
-
-image: python:3.6-stretch
+image: python:3.7-buster
 
 stages:
   - build
 
-before_script:
-  - apt-get install --yes -qqq zip
+variables:
+  SONAR_DEBUG: 1
+  TESTS_DEBUG: 1
+  DOCS_DEBUG: 1
 
-  # Check code quality against sonarqube
+tests:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip install -r requirements.txt
+    - pip --cache-dir .pip install -r requirements-tests.txt
+  script: |
+    export PYTHONPATH=${PYTHONPATH}:bump-release
+    pytest --cov=bump_release ./tests
+  cache:
+    paths:
+      - .pip/
+  tags:
+    - python3.6
+
+# Check code quality against sonarqube
 sonar:
   stage: build
   variables:
-    # CI vars
-    CI_DEBUG_TRACE: "false"
-    # Sonar vars
-    SONAR_DEBUG: 0
-    SONAR_VERSION: "3.2.0.1227-linux"
-    SONAR_HOST: "http://sonarqube.ville.tg"
+    SONAR_VERSION: 4.0.0.1744-linux
     SONAR_SCANNER_OPTS: "-Xmx512m"
+    SONAR_HOST: "http://sonarqube.ville.tg/"
+    SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
+    - apt-get update
+    - apt-get install --yes -qqq openjdk-11-jdk-headless zip
     - pip --cache-dir .pip/ install pylint
-    - test ${SONAR_DEBUG} -eq 1 && ls -la
+  script: |
     # Installs sonar-runner ZIP file
-    - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
-    # yamllint disable-line rule:line-length
-    - wget --no-verbose https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
-    # yamllint disable-line rule:max-spaces-ahter
-    - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
-    - fi
-  script:
-    - sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
-
+    if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
+      wget --no-verbose ${SONAR_SCANNER_URL}
+      unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
+    fi
+    [[ $DEBUG_SONAR -eq 1 ]] && sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
     # Runs the sonar-runner
-    - export SONAR_SCANNER_OPTS="-Xmx512m"
-    - if [[ ${SONAR_DEBUG} -eq 1 ]]; then
-    # yamllint disable-line rule:line-length
-    - sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -X -Dsonar.host.url=$SONAR_HOST
-    - else
-    # yamllint disable-line rule:line-length
-    - sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.host.url=$SONAR_HOST
-    - fi
+    export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
+    export SONAR_USER_HOME=.
+    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.host.url=${SONAR_HOST}
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
       - .pip/
   tags:
     - python3.6
+
+# Builds sphinx docs
+pages:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip/ install -r requirements.txt
+    - pip --cache-dir .pip/ install -r requirements-docs.txt
+  script: |
+    cd ./docs
+    make html
+    # Copy built files to /public
+    mv build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  cache:
+    paths:
+      - .pip/
+  tags:
+    - python3.6
+
+deploy:
+  stage: build
+  before_script:
+    - pip --cache-dir .pip/ install requirements-deploy.txt
+  script: |
+    python3 setup.py sdist bdist_wheel
+    python3 -m twine upload dist/*
+  only:
+    - master
+    - tags
+  cache:
+    paths:
+      - .pip/
+  tags:
+    - python3.6
+
+
+

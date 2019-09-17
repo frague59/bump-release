@@ -1,108 +1,110 @@
+# -+- coding: utf-8 -+-
 """
 Tests for updaters
 """
-import configparser
+import logging
+import pytest
 from pathlib import Path
 from typing import Union
+from bump_release import helpers
 
-import pytest
-
-import bump_release
+logger = logging.getLogger("tests")
 
 MODULE_PATH = Path(__file__).parent
 
-_CONFIG = configparser.ConfigParser()
-_CONFIG.read("./fixtures/settings.ini")
-bump_release.CONFIG = _CONFIG
 
-
-def _find_row(
-        file_name: str,
-        row_strings: Union[str, tuple, list]
-) -> bool:
-    with open(file_name, "r") as text_file:
-        lines = text_file.readlines()
-
-    if isinstance(row_strings, str):
-        row_strings = [row_strings, ]
-
-    if isinstance(row_strings, tuple):
-        row_strings = list(row_strings)
-    found = []
-    for line in lines:
-        for row_string in row_strings:
-            if line == row_string:
-                found.append(row_string)
-                break
-
-    return len(row_strings) == len(found)
+@pytest.fixture
+def config():
+    config = helpers.load_release_file(MODULE_PATH / "fixtures" / "release.ini")
+    logger.info("config() Config file loaded")
+    assert config
+    return config
 
 
 @pytest.fixture
-def release():
-    return bump_release.split_release("1.1.1")
+def version():
+    splited_version = helpers.split_version("1.1.1")
+    return splited_version
 
 
-@pytest.fixture
-def main_module_text_file():
-    path = _CONFIG.get("main_project", "path")
-    new_path = MODULE_PATH / path
-    print("main_module_text_file() new_path =", new_path)
-    return str(new_path)
+def test_load_release_file(config):
+    """
+    Tests the loading and the values of the release.ini file
+
+    :param config:
+    :return:
+    """
+    assert config.has_section("main_project"), "No `main_project` section in release.ini file"
+    assert config.has_section("sonar"), "No `sonar` section in release.ini file"
+    assert config.has_section("docs"), "No `docs` section in release.ini file"
+    assert config.has_section("ansible"), "No `ansible` section in release.ini file"
+
+    assert config.has_option("DEFAULT", "current_release"), "No `DEFAULT.current_release` value in release.ini file"
+    assert config.has_option("main_project", "path"), "No `main_project.path` value in release.ini file"
+    assert config.has_option("sonar", "path"), "No `sonar.path` value in release.ini file"
+    assert config.has_option("docs", "path"), "No `docs.path` value in release.ini file"
+    assert config.has_option("ansible", "path"), "No `ansible.path` value in release.ini file"
 
 
-@pytest.fixture
-def sonar_file():
-    path = _CONFIG.get("sonar", "path")
-    new_path = MODULE_PATH / path
-    print("sonar_file() new_path =", new_path)
-    return str(new_path)
+def test_version():
+    splited_version = helpers.split_version("0.0.1")
+    assert splited_version == ("0", "0", "1"), "Version for `0.0.1` MUST BE ('0', '0', '1')"
+    splited_version = helpers.split_version("1.1.1")
+    assert splited_version == ("1", "1", "1"), "Version for `1.1.1` MUST BE ('1', '1', '1')"
+    splited_version = helpers.split_version("1.1.1a")
+    assert splited_version == ("1", "1", "1a"), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
+    splited_version = helpers.split_version("1.1.1b")
+    assert splited_version == ("1", "1", "1b"), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
 
 
-@pytest.fixture
-def sphinx_file():
-    path = _CONFIG.get("docs", "path")
-    new_path = MODULE_PATH / path
-    print("docs_file() new_path =", new_path)
-    return str(new_path)
+def test_update_main_project(config, version):
+    str_path = config["main_project"].get("path")
+    assert str_path is not None
+    path = MODULE_PATH / str_path
+    new_row = helpers.update_file(path=path, pattern=helpers.MAIN_PROJECT_PATTERN, template=helpers.MAIN_PROJECT_TEMPLATE,
+                                  version=version, dry_run=True)
+    assert new_row.strip() == "__version__ = VERSION = \"1.1.1\"", "MAIN: Versions does not match"
 
 
-def test_split_release():
-    splited = bump_release.split_release("1.1.1")
-    assert splited == ("1", "1", "1")
-
-    splited = bump_release.split_release("1.1.1a")
-    assert splited == ("1", "1", "1a")
-
-
-def test_update_main_file(main_module_text_file, release):
-    bump_release.update_main_file(
-        path=main_module_text_file,
-        release_number=release,
-        dry_run=False
-    )
-
-    found = _find_row(main_module_text_file, "__version__ = VERSION = \"1.1.1\"\n")
-    assert found
+def test_update_sonar_properties(config, version):
+    str_path = config["sonar"].get("path")
+    assert str_path is not None
+    path = MODULE_PATH / str_path
+    new_row = helpers.update_file(path=path, pattern=helpers.SONAR_PATTERN, template=helpers.SONAR_TEMPLATE,
+                                  version=version, dry_run=True)
+    assert new_row.strip() == "sonar.projectVersion=1.1", "SONAR: Versions does not match"
 
 
-def test_update_sonar(sonar_file, release):
-    bump_release.update_sonar_properties(
-        path=sonar_file,
-        release_number=release,
-        dry_run=False
-    )
+def test_update_docs(config, version):
+    str_path = config.get("docs", "path")
+    assert str_path is not None
+    path = MODULE_PATH / str_path
+    version_pattern = config.get("docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN)
+    release_pattern = config.get("docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN)
+    version_format = config.get("docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT)
+    release_format = config.get("docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT)
+    new_row = helpers.update_file(path=path, pattern=release_pattern, template=release_format,
+                                  version=version, dry_run=True)
+    assert new_row.strip() == "release = \"1.1.1\"", "DOCS: Versions does not match"
 
-    found = _find_row(sonar_file, "sonar.projectVersion=1.1\n")
-    assert found
+    new_row = helpers.update_file(path=path, pattern=version_pattern, template=version_format,
+                                  version=version, dry_run=True)
+    assert new_row.strip() == "release = \"1.1\"", "DOCS: Versions does not match"
 
 
-def test_update_sphinx(sphinx_file, release):
-    bump_release.update_sphinx_conf(
-        path=sphinx_file,
-        release_number=release,
-        dry_run=False
-    )
+def test_update_node_packages(config, version):
+    str_path = config.get("node", "path", fallback=str(Path(__file__).parent / "fixtures" / "assets" / "package.json"))
+    assert str_path is not None
+    path = MODULE_PATH / str_path
+    key = config.get("node", "key", fallback=helpers.NODE_KEY)
+    new_content = helpers.update_node_packages(path=path, version=version, key=key)
+    assert new_content, "NODE: New content cannot be empty"
 
-    found = _find_row(sphinx_file, ("version = \"1.1\"\n", "release = \"1.1.1\"\n",))
-    assert found
+
+def test_update_ansible(config, version):
+    str_path = config.get("ansible", "path", fallback="vars.yml")
+    key = config.get("ansible", "key", fallback="git.release")
+    assert str_path is not None
+    path = MODULE_PATH / str_path
+    new_content = helpers.updates_yml_file(path=path, version=version, key=key)
+    assert new_content, "ANSIBLE: New content cannot be empty"
