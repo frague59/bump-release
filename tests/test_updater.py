@@ -5,7 +5,6 @@ Tests for updaters
 import logging
 import pytest
 from pathlib import Path
-from typing import Union
 import bump_release
 from bump_release import helpers
 
@@ -16,7 +15,8 @@ MODULE_PATH = Path(__file__).parent
 
 @pytest.fixture
 def config():
-    config = helpers.load_release_file(MODULE_PATH / "fixtures" / "release.ini")
+    release_ini_path = Path.cwd() / "tests" / "fixtures" / "release.ini"
+    config = helpers.load_release_file(release_ini_path)
     logger.info("config() Config file loaded")
     assert config
     return config
