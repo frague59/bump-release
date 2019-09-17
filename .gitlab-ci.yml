@@ -82,8 +82,8 @@ deploy_staging:
     python3 setup.py sdist bdist_wheel
     python3 -m twine upload \
       --repository-url https://test.pypi.org/legacy/ \
-      --username ${USERNAME_STAGING} \
-      --password ${PASSWORD_STAGING} \
+      --username "$USERNAME_STAGING" \
+      --password "$PASSWORD_STAGING" \
       dist/*
   cache:
     paths:
@@ -98,8 +98,8 @@ deploy_prod:
   script: |
     python3 setup.py sdist bdist_wheel
     python3 -m twine upload \
-      --username ${USERNAME} \
-      --password ${PASSWORD} \
+      --username "$USERNAME" \
+      --password "$PASSWORD" \
       dist/*
   only:
     - master
