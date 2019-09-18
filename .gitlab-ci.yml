@@ -84,7 +84,7 @@ deploy_staging:
       --repository-url https://test.pypi.org/legacy/ \
       --username "$USERNAME_STAGING" \
       --password "$PASSWORD_STAGING" \
-      --verbose \
+      --skip-existing \
       dist/*
   cache:
     paths:

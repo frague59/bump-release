@@ -8,7 +8,6 @@ import pprint
 import click
 import configparser
 import logging
-from io import StringIO
 from pathlib import Path
 from typing import Tuple, Optional
 from bump_release import helpers
