@@ -101,6 +101,7 @@ deploy_prod:
     python3 -m twine upload \
       --username "$USERNAME" \
       --password "$PASSWORD" \
+      --skip-existing \
       dist/*
   only:
     - master
