@@ -8,14 +8,13 @@ import pprint
 import click
 import configparser
 import logging
-from io import StringIO
 from pathlib import Path
 from typing import Tuple, Optional
 from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Constants
-__version__ = VERSION = "0.5.0"
+__version__ = VERSION = "0.5.1"
 RELEASE_CONFIG = None
 RELEASE_FILE = None
 # endregion Constants
