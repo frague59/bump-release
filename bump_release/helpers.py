@@ -31,7 +31,7 @@ MAIN_PROJECT_PATTERN = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
 MAIN_PROJECT_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
 
 # Ansible yaml key
-ANSIBLE_KEY = "git.branch"
+ANSIBLE_KEY = "git.version"
 
 # sonar (re search and replace)
 SONAR_PATTERN = r"^sonar.projectVersion=([.\d]+)$"
