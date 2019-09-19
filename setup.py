@@ -13,7 +13,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bump_release-frague59",
-    version="0.5.2",
+    version="0.5.6",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
     description="Updates various version numbers for python projects",
