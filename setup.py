@@ -24,6 +24,7 @@ setuptools.setup(
         "Click",
         "PyYAML"
     ],
+    packages=setuptools.find_packages(),
     entry_points="""
      [console_scripts]
      bump_release=bump_release:bump_release
