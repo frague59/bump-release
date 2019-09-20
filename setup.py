@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="bump_release-frague59",
+    name="bump_release",
     version="0.5.8",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
