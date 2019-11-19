@@ -108,7 +108,7 @@ def test_update_ansible(config, version):
     key = config.get("ansible", "key", fallback="git.release")
     assert str_path is not None
     path = Path(str_path)
-    new_content = helpers.updates_yml_file(path=path, version=version, key=key)
+    new_content = helpers.updates_yaml_file(path=path, version=version, key=key)
     assert new_content, "ANSIBLE: New content cannot be empty"
 
 

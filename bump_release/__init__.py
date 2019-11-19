@@ -306,7 +306,7 @@ def update_ansible_vars(
         key = RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
-    return helpers.updates_yml_file(
+    return helpers.updates_yaml_file(
         path=path, version=version, key=key, dry_run=dry_run
     )
 

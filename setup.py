@@ -22,7 +22,7 @@ setuptools.setup(
     py_modules=["bump_release"],
     install_requires=[
         "Click",
-        "PyYAML"
+        "ruamel.yaml"
     ],
     packages=setuptools.find_packages(),
     entry_points="""
