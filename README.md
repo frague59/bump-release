@@ -1,4 +1,4 @@
-# Updates the release numbers for a projects 
+# Updates the release numbers for a projects
 
 [![pipeline status](http://gitlab.ville.tg/fguerin/bump-release/badges/master/pipeline.svg)](http://gitlab.ville.tg/fguerin/bump-release/commits/master)
 
@@ -10,7 +10,7 @@ This script uses the release.ini file placed at the root of the project.
 
 ```ini
 [DEFAULT]
-current_release = 0.1.0  # Current version of the projects 
+current_release = 0.1.0  # Current version of the projects
 
 [main_project]
 path = <project>/settings/base.py
@@ -44,7 +44,7 @@ release_format = 'release = "{major}.{minor}.{release}"\n'
 
 [ansible]
 path = <project>/../ansible/prod/vars/vars.yml"
-# Optional key - The script searches for the "git" root key, and then for "version" sub-key 
+# Optional key - The script searches for the "git" root key, and then for "version" sub-key
 key = "git.version"
 
 [setup]
@@ -59,17 +59,17 @@ template = "    version=\"{major}.{minor}.{release}\","
 ## Version numbers that can be updated
 
 + main project version
-+ node package.json 
++ node package.json
 + sonar properties
-+ sphinx docs 
++ sphinx docs
 + ansible variables in a vars file
-+ setup.py 
++ setup.py
 
-## Installation 
+## Installation
 
 ```bash
 $ pip install --user bump-release
-``` 
+```
 
 ## Usage
 

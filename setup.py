@@ -20,10 +20,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     py_modules=["bump_release"],
-    install_requires=[
-        "Click",
-        "ruamel.yaml"
-    ],
+    install_requires=["Click", "ruamel.yaml"],
     packages=setuptools.find_packages(),
     entry_points="""
      [console_scripts]

@@ -2,14 +2,14 @@
 """
 Update release numbers in various places, according to a release.ini file places at the project root
 """
-import os
-import pprint
-
-import click
 import configparser
 import logging
+import os
+import pprint
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+import click
 from bump_release import helpers
 from bump_release.helpers import split_version
 

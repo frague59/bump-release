@@ -7,15 +7,16 @@ helpers for :mod:`bump_release` application
 :modulename: bump_release.helpers
 
 """
+import configparser
+import json
 import logging
 import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Union, Optional
-import configparser
+from typing import Optional, Tuple, Union
+
 from ruamel.yaml import YAML
-import json
 
 __author__ = "fguerin"
 
