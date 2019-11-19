@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Optional, Tuple, Union
 
 from ruamel.yaml import YAML
+from ruamel.yaml.compat import StringIO
 
 __author__ = "fguerin"
 
@@ -177,15 +178,39 @@ def update_node_packages(
         )
 
 
+class MyYAML(YAML):
+    """
+    Wrapper arround ruamel.yaml to output directly strings
+    """
+
+    def dump(self, data, stream=None, **kw):
+        inefficient = False
+        if stream is None:
+            inefficient = True
+            stream = StringIO()
+        YAML.dump(self, data, stream, **kw)
+        if inefficient:
+            return stream.getvalue()
+
+
 def updates_yaml_file(
     path: Path,
     version: Tuple[str, str, str],
-    key: str = NODE_KEY,
+    key: str = ANSIBLE_KEY,
     dry_run: bool = False,
 ) -> str:
+    """
+    Replaces the version number in a YAML file, aka. ansible vars files
+
+    :params path: Path to the yaml file
+    :param version: New version to applyn, as a tuple (major, minor, release)
+    :param key: key in the files, as xxx.yyy
+    :param dry_run: If True, no action is performed
+    :returns: new file content
+    """
     splited_key = key.split(".")
     full_version = ".".join(version)
-    yaml = YAML(typ="safe")
+    yaml = MyYAML(typ="safe")
     with path.open(mode="r") as vars_file:
         document = yaml.load(vars_file)
     node = document
