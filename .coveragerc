@@ -1,0 +1,4 @@
+[run]
+omit =
+  bump_release/__main__.py
+  bump_release/__init__.py
