@@ -2,19 +2,19 @@
 """
 Update release numbers in various places, according to a release.ini file places at the project root
 """
-import os
-import pprint
-
-import click
 import configparser
 import logging
+import os
+import pprint
 from pathlib import Path
-from typing import Tuple, Optional
+from typing import Optional, Tuple
+
+import click
 from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Constants
-__version__ = VERSION = "0.5.9"
+__version__ = VERSION = "0.6.0"
 RELEASE_CONFIG = None
 RELEASE_FILE = None
 # endregion Constants
@@ -306,7 +306,7 @@ def update_ansible_vars(
         key = RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)
     except configparser.Error as e:
         raise helpers.NothingToDoException(e)
-    return helpers.updates_yml_file(
+    return helpers.updates_yaml_file(
         path=path, version=version, key=key, dry_run=dry_run
     )
 

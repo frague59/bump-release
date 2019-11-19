@@ -7,15 +7,16 @@ helpers for :mod:`bump_release` application
 :modulename: bump_release.helpers
 
 """
+import configparser
+import json
 import logging
 import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Tuple, Union, Optional
-import configparser
-import yaml
-import json
+from typing import Optional, Tuple, Union
+
+from ruamel.yaml import YAML
 
 __author__ = "fguerin"
 
@@ -176,7 +177,7 @@ def update_node_packages(
         )
 
 
-def updates_yml_file(
+def updates_yaml_file(
     path: Path,
     version: Tuple[str, str, str],
     key: str = NODE_KEY,
@@ -184,8 +185,9 @@ def updates_yml_file(
 ) -> str:
     splited_key = key.split(".")
     full_version = ".".join(version)
+    yaml = YAML(typ="safe")
     with path.open(mode="r") as vars_file:
-        document = yaml.load(vars_file, Loader=yaml.FullLoader)
+        document = yaml.load(vars_file)
     node = document
     for _key in splited_key:
         if _key == splited_key[-1] and not dry_run:

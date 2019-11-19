@@ -13,17 +13,14 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bump_release",
-    version="0.5.9",
+    version="0.6.0",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
     description="Updates various version numbers for python projects",
     long_description=long_description,
     long_description_content_type="text/markdown",
     py_modules=["bump_release"],
-    install_requires=[
-        "Click",
-        "PyYAML"
-    ],
+    install_requires=["Click", "ruamel.yaml"],
     packages=setuptools.find_packages(),
     entry_points="""
      [console_scripts]

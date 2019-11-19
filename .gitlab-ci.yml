@@ -111,6 +111,3 @@ deploy_prod:
       - .pip/
   tags:
     - python3.6
-
-
-
