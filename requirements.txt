@@ -1,2 +1,2 @@
 click
-PyYAML
+ruamel.yaml
