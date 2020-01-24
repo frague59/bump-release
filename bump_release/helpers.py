@@ -210,7 +210,7 @@ def updates_yaml_file(
     """
     splited_key = key.split(".")
     full_version = ".".join(version)
-    yaml = MyYAML(typ="safe")
+    yaml = MyYAML()
     with path.open(mode="r") as vars_file:
         document = yaml.load(vars_file)
     node = document

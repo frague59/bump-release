@@ -22,7 +22,8 @@ tests:
     paths:
       - .pip/
   tags:
-    - python3.6
+    - python3.7
+    - docker
 
 # Check code quality against sonarqube
 sonar:
@@ -52,7 +53,8 @@ sonar:
       - sonar-scanner-${SONAR_VERSION}/
       - .pip/
   tags:
-    - python3.6
+    - python3.7
+    - docker
 
 # Builds sphinx docs
 pages:
@@ -72,7 +74,8 @@ pages:
     paths:
       - .pip/
   tags:
-    - python3.6
+    - python3.7
+    - docker
 
 deploy_staging:
   stage: build
@@ -90,7 +93,8 @@ deploy_staging:
     paths:
       - .pip/
   tags:
-    - python3.6
+    - python3.7
+    - docker
 
 deploy_prod:
   stage: build
@@ -110,4 +114,5 @@ deploy_prod:
     paths:
       - .pip/
   tags:
-    - python3.6
+    - python3.7
+    - docker
