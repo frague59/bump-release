@@ -67,7 +67,7 @@ template = "    version=\"{major}.{minor}.{release}\","
 
 ## Installation
 
-```bash
+```sh
 $ pip install --user bump-release
 ```
 
