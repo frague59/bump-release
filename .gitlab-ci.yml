@@ -58,8 +58,8 @@ sonar:
     - apt-get --yes -qq install openjdk-11-jre-headless
     # Installs sonar-runner ZIP file
     - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
-    -   wget --no-verbose ${SONAR_SCANNER_URL}
-    -   unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
+    - wget --no-verbose ${SONAR_SCANNER_URL}
+    - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
     - fi
     - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/
     - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/bin/
@@ -88,7 +88,8 @@ sonar:
 pages:
   stage: build
   before_script:
-    - pip --cache-dir .pip/ install -r requirements-docs.txt
+    - pip --cache-dir .pip/ install --requirement requirements.txt
+    - pip --cache-dir .pip/ install --requirement requirements-docs.txt
   script: |
     cd ./docs
     make html
