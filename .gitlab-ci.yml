@@ -35,7 +35,7 @@ flake8:
     - pip --cache-dir .pip/ install flake8
   script: |
     [[ ${DEBUG_FLAKE8} -eq 1 ]] && ls -la
-    flake8 ./src
+    flake8 ./bump_release
   tags:
     - python3.7
     - docker
@@ -67,7 +67,7 @@ sonar:
     # Runs the sonar-runner
     export SONAR_USER_HOME=.
     export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
-    export PYTHONPATH=${PYTHONPATH}:./src
+    export PYTHONPATH=${PYTHONPATH}:.
     SONAR_ARGS=-Dsonar.branch=${CI_COMMIT_BRANCH} -Dsonar.host.url=${SONAR_HOST}
     if [[ ${DEBUG_SONAR} -eq 1 ]]; then
       EXTRA_ARGS=-X
