@@ -12,7 +12,7 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Constants
-__version__ = VERSION = "0.7.0"
+__version__ = VERSION = "0.8.0"
 RELEASE_CONFIG = None
 RELEASE_FILE = None
 # endregion Constants
