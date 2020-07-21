@@ -137,7 +137,6 @@ release:
       --skip-existing \
       dist/*
   only:
-    - master
     - tags
   cache:
     paths:
