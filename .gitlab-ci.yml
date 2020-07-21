@@ -21,7 +21,7 @@ tests:
   before_script:
     - pip --cache-dir .pip install -r requirements-tests.txt
   script: |
-    export PYTHONPATH=${PYTHONPATH}:bump-release
+    export PYTHONPATH=${PYTHONPATH}:.
     pytest --cov=bump_release ./tests
   cache:
     paths:
