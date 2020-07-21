@@ -3,15 +3,17 @@
 image: python:3.7-buster
 
 stages:
-  - build
+  - lint
+  - tests
+  - deploy
 
 variables:
-  SONAR_DEBUG: 1
-  TESTS_DEBUG: 1
-  DOCS_DEBUG: 1
+  DEBUG_SPHINX: 0
+  DEBUG_SONAR: 0
+  DEBUG_FLAKE8: 0
 
 tests:
-  stage: build
+  stage: tests
   before_script:
     - pip --cache-dir .pip install -r requirements.txt
     - pip --cache-dir .pip install -r requirements-tests.txt
@@ -25,29 +27,52 @@ tests:
     - python3.7
     - docker
 
+# Checks python code against flake8
+flake8:
+  stage: lint
+  before_script:
+    - pip --cache-dir .pip/ install flake8
+  script: |
+    [[ ${DEBUG_FLAKE8} -eq 1 ]] && ls -la
+    flake8 ./src
+  tags:
+    - python3.7
+    - docker
+
 # Check code quality against sonarqube
+# Checks python/js/css code against SONAR
 sonar:
-  stage: build
+  stage: lint
   variables:
-    SONAR_VERSION: 4.0.0.1744-linux
+    SONAR_VERSION: 4.3.0.2102-linux
     SONAR_SCANNER_OPTS: "-Xmx512m"
     SONAR_HOST: "http://sonarqube.ville.tg/"
+    # yamllint disable-line rule:line-length
     SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
-    - apt-get update
-    - apt-get install --yes -qqq openjdk-11-jdk-headless zip
-    - pip --cache-dir .pip/ install pylint
-  script: |
+    - apt-get --yes -qq update
+    - apt-get --yes -qq install openjdk-11-jre-headless
+    - pip install --cache-dir .pip/ --requirement requirements/sonar.txt
     # Installs sonar-runner ZIP file
-    if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
-      wget --no-verbose ${SONAR_SCANNER_URL}
-      unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
-    fi
-    [[ $DEBUG_SONAR -eq 1 ]] && sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
+    - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
+    -   wget --no-verbose ${SONAR_SCANNER_URL}
+    -   unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
+    - fi
+    - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/
+    - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/bin/
+    # yamllint disable-line rule:line-length
+    - test $DEBUG_SONAR -eq 1 && sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
+  script: |
     # Runs the sonar-runner
-    export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
     export SONAR_USER_HOME=.
-    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.host.url=${SONAR_HOST}
+    export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
+    export PYTHONPATH=${PYTHONPATH}:./src
+    SONAR_ARGS=-Dsonar.branch=${CI_COMMIT_BRANCH} -Dsonar.host.url=${SONAR_HOST}
+    if [[ ${DEBUG_SONAR} -eq 1 ]]; then
+      EXTRA_ARGS=-X
+    fi
+    # yamllint disable-line rule:line-length
+    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner ${SONAR_ARGS}
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
@@ -77,8 +102,8 @@ pages:
     - python3.7
     - docker
 
-deploy_staging:
-  stage: build
+release_staging:
+  stage: deploy
   before_script:
     - pip --cache-dir .pip/ install -r requirements-deploy.txt
   script: |
@@ -96,8 +121,8 @@ deploy_staging:
     - python3.7
     - docker
 
-deploy_prod:
-  stage: build
+release:
+  stage: deploy
   before_script:
     - pip --cache-dir .pip/ install -r requirements-deploy.txt
   script: |
