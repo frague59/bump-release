@@ -71,10 +71,10 @@ sonar:
     export PYTHONPATH=${PYTHONPATH}:.
     SONAR_ARGS=-Dsonar.branch=${CI_COMMIT_BRANCH} -Dsonar.host.url=${SONAR_HOST}
     if [[ ${DEBUG_SONAR} -eq 1 ]]; then
-      EXTRA_ARGS=-X
+      EXTRA_ARGS=${EXTRA_ARGS} -X
     fi
     # yamllint disable-line rule:line-length
-    sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner ${SONAR_ARGS}
+    ./sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner ${SONAR_ARGS}
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
