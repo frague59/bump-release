@@ -74,7 +74,7 @@ sonar:
       EXTRA_ARGS=${EXTRA_ARGS} -X
     fi
     # yamllint disable-line rule:line-length
-    ./sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner ${SONAR_ARGS}
+    ./sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner ${SONAR_ARGS} .
   cache:
     paths:
       - sonar-scanner-${SONAR_VERSION}/
