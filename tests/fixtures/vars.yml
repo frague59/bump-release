@@ -1,2 +1,5 @@
-git: {release: 0.0.2, repository: 'ssh://git@gitlab.ville.tg/fguerin/agenda.git',
-  version: 0.0.1}
+# Fixture for YAML file
+git:
+  repository: ssh://git@gitlab.ville.tg/fguerin/agenda.git
+  version: 0.0.1
+  release: 0.0.2

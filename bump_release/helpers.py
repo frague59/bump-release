@@ -45,9 +45,9 @@ SETUP_TEMPLATE = '    version="{major}.{minor}.{release}",\n'
 
 
 # Sphinx (re search and replace)
-DOCS_VERSION_PATTERN = r"^release\s+=\s+[\"']([.\d\w]+)[\"']$"
-DOCS_RELEASE_PATTERN = r"^release\s+=\s+[\"']([.\d\w]+)[\"']$"
-DOCS_VERSION_FORMAT = 'release = "{major}.{minor}"\n'
+DOCS_VERSION_PATTERN = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"
+DOCS_RELEASE_PATTERN = r"^release\s*=\s*[\"']([.\d\w]+)[\"']$"
+DOCS_VERSION_FORMAT = 'version = "{major}.{minor}"\n'
 DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
 
 RELEASE_INI_PATTERN = r"^current_release\s*=\s*['\"]?([.\d\w]+)['\"]?$"
