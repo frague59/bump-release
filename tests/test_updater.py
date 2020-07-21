@@ -124,18 +124,21 @@ def test_update_docs(config, version):
     str_path = config.get("docs", "path")
     assert str_path is not None
     path = Path(str_path)
+
     version_pattern = config.get(
         "docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN
-    )
-    release_pattern = config.get(
-        "docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN
     )
     version_format = config.get(
         "docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT
     )
+
+    release_pattern = config.get(
+        "docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN
+    )
     release_format = config.get(
         "docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT
     )
+
     new_row = helpers.update_file(
         path=path,
         pattern=release_pattern,
@@ -152,7 +155,7 @@ def test_update_docs(config, version):
         version=version,
         dry_run=True,
     )
-    assert new_row.strip() == 'release = "0.0"', "DOCS: Versions does not match"
+    assert new_row.strip() == 'version = "0.0"', "DOCS: Versions does not match"
 
 
 def test_update_node_packages(config, version):
