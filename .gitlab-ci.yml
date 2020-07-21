@@ -53,6 +53,7 @@ sonar:
     # yamllint disable-line rule:line-length
     SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
   before_script:
+    - pip --cache-dir .pip/ install -r requirements-sonar.txt
     - apt-get --yes -qq update
     - apt-get --yes -qq install openjdk-11-jre-headless
     # Installs sonar-runner ZIP file
