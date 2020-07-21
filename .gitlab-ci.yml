@@ -8,6 +8,9 @@ stages:
   - tests
   - deploy
 
+before_script:
+  - pip install --cache-dir .pip/ --requirement requirements.txt
+
 variables:
   DEBUG_SPHINX: 0
   DEBUG_SONAR: 0
@@ -16,7 +19,6 @@ variables:
 tests:
   stage: tests
   before_script:
-    - pip --cache-dir .pip install -r requirements.txt
     - pip --cache-dir .pip install -r requirements-tests.txt
   script: |
     export PYTHONPATH=${PYTHONPATH}:bump-release
@@ -53,7 +55,6 @@ sonar:
   before_script:
     - apt-get --yes -qq update
     - apt-get --yes -qq install openjdk-11-jre-headless
-    - pip install --cache-dir .pip/ --requirement requirements/sonar.txt
     # Installs sonar-runner ZIP file
     - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
     -   wget --no-verbose ${SONAR_SCANNER_URL}
@@ -86,7 +87,6 @@ sonar:
 pages:
   stage: build
   before_script:
-    - pip --cache-dir .pip/ install -r requirements.txt
     - pip --cache-dir .pip/ install -r requirements-docs.txt
   script: |
     cd ./docs
