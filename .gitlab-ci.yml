@@ -19,7 +19,8 @@ variables:
 tests:
   stage: tests
   before_script:
-    - pip --cache-dir .pip install -r requirements-tests.txt
+    - pip --cache-dir .pip/ install --requirement requirements.txt
+    - pip --cache-dir .pip/ install --requirement requirements-tests.txt
   script: |
     export PYTHONPATH=${PYTHONPATH}:.
     pytest --cov=bump_release ./tests
