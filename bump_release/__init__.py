@@ -4,8 +4,6 @@ Update release numbers in various places, according to a release.ini file places
 """
 import configparser
 import logging
-import os
-import pprint
 from pathlib import Path
 from typing import Optional, Tuple
 
