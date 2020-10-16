@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 helpers for :mod:`bump_release` application
 
@@ -81,8 +80,7 @@ def split_version(version: str) -> Tuple[str, str, str]:
         major, minor, release = version.split(".")
     except ValueError:
         logging.fatal(
-            'Version number "%s" does not respect the <MAJOR>.<MINOR>.<RELEASE> format.',
-            version,
+            'Version number "%s" does not respect the <MAJOR>.<MINOR>.<RELEASE> format.', version,
         )
         raise
     else:
@@ -90,11 +88,7 @@ def split_version(version: str) -> Tuple[str, str, str]:
 
 
 def update_file(
-    path: Path,
-    pattern: str,
-    template: str,
-    version: Tuple[str, str, str],
-    dry_run: Optional[bool] = False,
+    path: Path, pattern: str, template: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False,
 ) -> Optional[str]:
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
@@ -120,18 +114,14 @@ def update_file(
         searched = version_re.search(row)
         if searched:
             logging.debug(
-                "update_file() a *MATCHING* row has been found:\n%d %s",
-                counter,
-                row.strip(),
+                "update_file() a *MATCHING* row has been found:\n%d %s", counter, row.strip(),
             )
             old_row = deepcopy(row)
             new_row = template.format(major=major, minor=minor, release=release)
             break
 
     if old_row and new_row:
-        logging.info(
-            "update_file() old_row:\n%s\nnew_row:\n%s", old_row.strip(), new_row.strip()
-        )
+        logging.info("update_file() old_row:\n%s\nnew_row:\n%s", old_row.strip(), new_row.strip())
 
     if dry_run:
         logging.info("update_file() No operation performed, dry_run = %s", dry_run)
@@ -148,10 +138,7 @@ def update_file(
 
 
 def update_node_packages(
-    path: Path,
-    version: Tuple[str, str, str],
-    key: str = NODE_KEY,
-    dry_run: bool = False,
+    path: Path, version: Tuple[str, str, str], key: str = NODE_KEY, dry_run: bool = False,
 ):
     """
     Updates the package.json file
@@ -173,9 +160,7 @@ def update_node_packages(
                 package_file.write(updated)
         return updated
     except IOError as ioe:
-        raise UpdateException(
-            "update_node_packages() Unable to perform %s update:" % package_file, ioe
-        )
+        raise UpdateException("update_node_packages() Unable to perform %s update:" % package_file, ioe)
 
 
 class MyYAML(YAML):
@@ -193,12 +178,7 @@ class MyYAML(YAML):
             return stream.getvalue()
 
 
-def updates_yaml_file(
-    path: Path,
-    version: Tuple[str, str, str],
-    key: str = ANSIBLE_KEY,
-    dry_run: bool = False,
-) -> str:
+def updates_yaml_file(path: Path, version: Tuple[str, str, str], key: str = ANSIBLE_KEY, dry_run: bool = False,) -> str:
     """
     Replaces the version number in a YAML file, aka. ansible vars files
 
