@@ -1,4 +1,3 @@
-# -+- coding: utf-8 -+-
 """
 Tests for updaters
 """
@@ -36,56 +35,28 @@ def test_load_release_file(config):
     :param config:
     :return:
     """
-    assert config.has_section(
-        "main_project"
-    ), "No `main_project` section in release.ini file"
+    assert config.has_section("main_project"), "No `main_project` section in release.ini file"
     assert config.has_section("sonar"), "No `sonar` section in release.ini file"
     assert config.has_section("docs"), "No `docs` section in release.ini file"
     assert config.has_section("ansible"), "No `ansible` section in release.ini file"
 
-    assert config.has_option(
-        "DEFAULT", "current_release"
-    ), "No `DEFAULT.current_release` value in release.ini file"
-    assert config.has_option(
-        "main_project", "path"
-    ), "No `main_project.path` value in release.ini file"
-    assert config.has_option(
-        "sonar", "path"
-    ), "No `sonar.path` value in release.ini file"
+    assert config.has_option("DEFAULT", "current_release"), "No `DEFAULT.current_release` value in release.ini file"
+    assert config.has_option("main_project", "path"), "No `main_project.path` value in release.ini file"
+    assert config.has_option("sonar", "path"), "No `sonar.path` value in release.ini file"
     assert config.has_option("docs", "path"), "No `docs.path` value in release.ini file"
-    assert config.has_option(
-        "ansible", "path"
-    ), "No `ansible.path` value in release.ini file"
-    assert config.has_option(
-        "setup", "path"
-    ), "No `setup.path` value in release.ini file"
+    assert config.has_option("ansible", "path"), "No `ansible.path` value in release.ini file"
+    assert config.has_option("setup", "path"), "No `setup.path` value in release.ini file"
 
 
 def test_version():
     splited_version = helpers.split_version("0.0.1")
-    assert splited_version == (
-        "0",
-        "0",
-        "1",
-    ), "Version for `0.0.1` MUST BE ('0', '0', '1')"
+    assert splited_version == ("0", "0", "1",), "Version for `0.0.1` MUST BE ('0', '0', '1')"
     splited_version = helpers.split_version("1.1.1")
-    assert splited_version == (
-        "1",
-        "1",
-        "1",
-    ), "Version for `1.1.1` MUST BE ('1', '1', '1')"
+    assert splited_version == ("1", "1", "1",), "Version for `1.1.1` MUST BE ('1', '1', '1')"
     splited_version = helpers.split_version("1.1.1a")
-    assert splited_version == (
-        "1",
-        "1",
-        "1a",
-    ), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
+    assert splited_version == ("1", "1", "1a",), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
     splited_version = helpers.split_version("1.1.1b")
-    assert splited_version == (
-        "1",
-        "1",
-        "1b",
-    ), "Version for `0.0.2b` MUST BE ('1', '1', '1b')"
+    assert splited_version == ("1", "1", "1b",), "Version for `0.0.2b` MUST BE ('1', '1', '1b')"
 
 
 def test_update_main_project(config, version):
@@ -99,9 +70,7 @@ def test_update_main_project(config, version):
         version=version,
         dry_run=True,
     )
-    assert (
-        new_row.strip() == '__version__ = VERSION = "0.0.2"'
-    ), "MAIN: Versions does not match"
+    assert new_row.strip() == '__version__ = VERSION = "0.0.2"', "MAIN: Versions does not match"
 
 
 def test_update_sonar_properties(config, version):
@@ -109,15 +78,9 @@ def test_update_sonar_properties(config, version):
     assert str_path is not None
     path = Path(str_path)
     new_row = helpers.update_file(
-        path=path,
-        pattern=helpers.SONAR_PATTERN,
-        template=helpers.SONAR_TEMPLATE,
-        version=version,
-        dry_run=True,
+        path=path, pattern=helpers.SONAR_PATTERN, template=helpers.SONAR_TEMPLATE, version=version, dry_run=True,
     )
-    assert (
-        new_row.strip() == "sonar.projectVersion=0.0"
-    ), "SONAR: Versions does not match"
+    assert new_row.strip() == "sonar.projectVersion=0.0", "SONAR: Versions does not match"
 
 
 def test_update_docs(config, version):
@@ -125,45 +88,25 @@ def test_update_docs(config, version):
     assert str_path is not None
     path = Path(str_path)
 
-    version_pattern = config.get(
-        "docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN
-    )
-    version_format = config.get(
-        "docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT
-    )
+    version_pattern = config.get("docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN)
+    version_format = config.get("docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT)
 
-    release_pattern = config.get(
-        "docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN
-    )
-    release_format = config.get(
-        "docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT
-    )
+    release_pattern = config.get("docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN)
+    release_format = config.get("docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT)
 
     new_row = helpers.update_file(
-        path=path,
-        pattern=release_pattern,
-        template=release_format,
-        version=version,
-        dry_run=True,
+        path=path, pattern=release_pattern, template=release_format, version=version, dry_run=True,
     )
     assert new_row.strip() == 'release = "0.0.2"', "DOCS: Versions does not match"
 
     new_row = helpers.update_file(
-        path=path,
-        pattern=version_pattern,
-        template=version_format,
-        version=version,
-        dry_run=True,
+        path=path, pattern=version_pattern, template=version_format, version=version, dry_run=True,
     )
     assert new_row.strip() == 'version = "0.0"', "DOCS: Versions does not match"
 
 
 def test_update_node_packages(config, version):
-    str_path = config.get(
-        "node",
-        "path",
-        fallback=str(Path(__file__).parent / "fixtures" / "assets" / "package.json"),
-    )
+    str_path = config.get("node", "path", fallback=str(Path(__file__).parent / "fixtures" / "assets" / "package.json"),)
     assert str_path is not None
     path = Path(str_path)
     key = config.get("node", "key", fallback=helpers.NODE_KEY)

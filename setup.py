@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 setup for application
 
@@ -13,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bump_release",
-    version="0.8.2",
+    version="0.9.0",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
     description="Updates various version numbers for python projects",
@@ -33,7 +32,9 @@ setuptools.setup(
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Software Development",
     ],
     python_requires=">=3.7",

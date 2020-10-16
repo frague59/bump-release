@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 __main__ for :mod:`bump_release` application
 
@@ -17,13 +16,8 @@ __author__ = "fguerin"
 
 if __name__ == "__main__":
     bump_release.RELEASE_FILE = Path.cwd() / "release.ini"
-    bump_release.RELEASE_CONFIG = helpers.load_release_file(
-        release_file=bump_release.RELEASE_FILE
-    )
+    bump_release.RELEASE_CONFIG = helpers.load_release_file(release_file=bump_release.RELEASE_FILE)
     result = bump_release.process_update(
-        release_file=bump_release.RELEASE_FILE,
-        release="0.4.4",
-        dry_run=True,
-        debug=False,
+        release_file=bump_release.RELEASE_FILE, release="0.4.4", dry_run=True, debug=False,
     )
     sys.exit(result)

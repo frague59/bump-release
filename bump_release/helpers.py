@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 helpers for :mod:`bump_release` application
 
@@ -80,21 +79,14 @@ def split_version(version: str) -> Tuple[str, str, str]:
     try:
         major, minor, release = version.split(".")
     except ValueError:
-        logging.fatal(
-            'Version number "%s" does not respect the <MAJOR>.<MINOR>.<RELEASE> format.',
-            version,
-        )
+        logging.fatal(f'Version number "{version}" does not respect the <MAJOR>.<MINOR>.<RELEASE> format.')
         raise
     else:
         return major, minor, release
 
 
 def update_file(
-    path: Path,
-    pattern: str,
-    template: str,
-    version: Tuple[str, str, str],
-    dry_run: Optional[bool] = False,
+    path: Path, pattern: str, template: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False,
 ) -> Optional[str]:
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
@@ -119,39 +111,30 @@ def update_file(
     for counter, row in enumerate(content_lines):
         searched = version_re.search(row)
         if searched:
-            logging.debug(
-                "update_file() a *MATCHING* row has been found:\n%d %s",
-                counter,
-                row.strip(),
-            )
+            logging.debug(f"update_file({path}) a *MATCHING* row has been found:\n{counter} {row.strip()}")
             old_row = deepcopy(row)
             new_row = template.format(major=major, minor=minor, release=release)
             break
 
     if old_row and new_row:
-        logging.info(
-            "update_file() old_row:\n%s\nnew_row:\n%s", old_row.strip(), new_row.strip()
-        )
+        logging.info(f"update_file({path}) old_row:\n{old_row.strip()}\nnew_row:\n{new_row.strip()}")
 
     if dry_run:
-        logging.info("update_file() No operation performed, dry_run = %s", dry_run)
+        logging.info(f"update_file({path}) No operation performed, dry_run = {dry_run}",)
         return new_row
 
     if new_row and counter is not None:
         new_content[counter] = new_row
         with path.open(mode="w") as output_file:
             output_file.writelines(new_content)
-        logging.info('update_file() "%s" updated.', path)
+        logging.info(f"update_file({path}) File updated.")
         return new_row
 
-    raise UpdateException("An error has append on updating release")
+    raise UpdateException(f"An error has append on updating release for file {path}")
 
 
 def update_node_packages(
-    path: Path,
-    version: Tuple[str, str, str],
-    key: str = NODE_KEY,
-    dry_run: bool = False,
+    path: Path, version: Tuple[str, str, str], key: str = NODE_KEY, dry_run: bool = False,
 ):
     """
     Updates the package.json file
@@ -173,14 +156,12 @@ def update_node_packages(
                 package_file.write(updated)
         return updated
     except IOError as ioe:
-        raise UpdateException(
-            "update_node_packages() Unable to perform %s update:" % package_file, ioe
-        )
+        raise UpdateException(f"update_node_packages() Unable to perform {package_file} update: {ioe}")
 
 
 class MyYAML(YAML):
     """
-    Wrapper arround ruamel.yaml to output directly strings
+    Wrapper around ruamel.yaml to output directly strings
     """
 
     def dump(self, data, stream=None, **kw):
@@ -193,17 +174,12 @@ class MyYAML(YAML):
             return stream.getvalue()
 
 
-def updates_yaml_file(
-    path: Path,
-    version: Tuple[str, str, str],
-    key: str = ANSIBLE_KEY,
-    dry_run: bool = False,
-) -> str:
+def updates_yaml_file(path: Path, version: Tuple[str, str, str], key: str = ANSIBLE_KEY, dry_run: bool = False,) -> str:
     """
     Replaces the version number in a YAML file, aka. ansible vars files
 
-    :params path: Path to the yaml file
-    :param version: New version to applyn, as a tuple (major, minor, release)
+    :param path: Path to the yaml file
+    :param version: New version to apply, as a tuple (major, minor, release)
     :param key: key in the files, as xxx.yyy
     :param dry_run: If True, no action is performed
     :returns: new file content
@@ -218,7 +194,7 @@ def updates_yaml_file(
         if _key == splited_key[-1] and not dry_run:
             node.update({_key: full_version})
         node = node.get(_key)
-    logging.debug("updates_yml_file() node value = %s", node)
+    logging.debug(f"updates_yml_file({vars_file}) node value = {node}")
     new_content = yaml.dump(document)
     if not dry_run:
         with path.open(mode="w") as vars_file:
