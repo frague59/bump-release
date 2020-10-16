@@ -11,7 +11,7 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Constants
-__version__ = VERSION = "0.9.1"
+__version__ = VERSION = "0.9.3"
 RELEASE_CONFIG: Optional[dict] = None
 RELEASE_FILE: Optional[Path] = None
 # endregion Constants
@@ -81,9 +81,9 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     try:
         new_row = update_setup_file(version=version, dry_run=dry_run)
         if new_row is not None:
-            logging.debug(f"process_update() `docs`: new_row = {new_row.strip()}")
+            logging.debug(f"process_update() `setup`: new_row = {new_row.strip()}")
     except helpers.NothingToDoException as e:
-        logging.warning(f"process_update() No release section for `docs`: {e}")
+        logging.warning(f"process_update() No release section for `setup`: {e}")
     # endregion
 
     # region Updates sphinx file
@@ -99,7 +99,7 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     try:
         new_row = update_node_package(version=version, dry_run=dry_run)
         if new_row is not None:
-            logging.debug(f"process_update() `docs`: new_row = {new_row}",)
+            logging.debug(f"process_update() `node`: new_row = {new_row}",)
     except helpers.NothingToDoException as e:
         logging.warning(f"process_update() No release section for `node`: {e}")
     # endregion
@@ -108,9 +108,9 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     try:
         new_row = update_ansible_vars(version=version, dry_run=dry_run)
         if new_row is not None:
-            logging.debug(f"process_update() `docs`: new_row = {new_row.strip()}")
+            logging.debug(f"process_update() `ansible`: new_row = {new_row.strip()}")
     except helpers.NothingToDoException as e:
-        logging.warning(f"process_update() No release section for `node`: {e}")
+        logging.warning(f"process_update() No release section for `ansible`: {e}")
     # endregion
 
     # region Updates the release.ini file with the new release number
