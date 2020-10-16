@@ -111,7 +111,7 @@ def update_file(
     for counter, row in enumerate(content_lines):
         searched = version_re.search(row)
         if searched:
-            logging.debug(f"update_file() a *MATCHING* row has been found:\n{counter} {row.strip()}")
+            logging.debug(f"update_file({path}) a *MATCHING* row has been found:\n{counter} {row.strip()}")
             old_row = deepcopy(row)
             new_row = template.format(major=major, minor=minor, release=release)
             break

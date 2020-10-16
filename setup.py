@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bump_release",
-    version="0.8.2",
+    version="0.9.0",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
     description="Updates various version numbers for python projects",
