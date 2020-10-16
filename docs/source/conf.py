@@ -25,7 +25,7 @@ copyright = "2019, François GUÉRIN <fguerin@ville-tourcoing.fr>"
 author = "François GUÉRIN <fguerin@ville-tourcoing.fr>"
 
 # The full release, including alpha/beta/rc tags
-release = "0.9.0"
+release = "0.9.1"
 
 
 # -- General configuration ---------------------------------------------------
