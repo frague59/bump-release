@@ -81,7 +81,7 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     try:
         new_row = update_setup_file(version=version, dry_run=dry_run)
         if new_row is not None:
-            logging.debug(f"process_update() `docs`: new_row = new_row.strip()")
+            logging.debug(f"process_update() `docs`: new_row = {new_row.strip()}")
     except helpers.NothingToDoException as e:
         logging.warning(f"process_update() No release section for `docs`: {e}")
     # endregion
