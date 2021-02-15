@@ -15,6 +15,7 @@ setuptools.setup(
     version="0.9.3",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
+    url="https://github.com/frague59/bump-release",
     description="Updates various version numbers for python projects",
     long_description=long_description,
     long_description_content_type="text/markdown",
