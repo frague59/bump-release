@@ -24,33 +24,33 @@ RELEASE_CONFIG = None
 BASE_DIR = os.getcwd()
 # region Constants
 # Node (JSON value update)
-NODE_KEY = "release"
+NODE_KEY = "version"
 NODE_PACKAGE_FILE = "package.json"
 
 # main (re search and replace)
 MAIN_PROJECT_PATTERN = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
-MAIN_PROJECT_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"\n'
+MAIN_PROJECT_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"'
 
 # Ansible yaml key
 ANSIBLE_KEY = "git.version"
 
 # sonar (re search and replace)
 SONAR_PATTERN = r"^sonar.projectVersion=([.\d]+)$"
-SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}\n"
+SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}"
 
 # setup.py file
 SETUP_PATTERN = r"^\s*version=['\"]([.\d\w]+)['\"],$"
-SETUP_TEMPLATE = '    version="{major}.{minor}.{release}",\n'
+SETUP_TEMPLATE = '    version="{major}.{minor}.{release}",'
 
 
 # Sphinx (re search and replace)
 DOCS_VERSION_PATTERN = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"
 DOCS_RELEASE_PATTERN = r"^release\s*=\s*[\"']([.\d\w]+)[\"']$"
-DOCS_VERSION_FORMAT = 'version = "{major}.{minor}"\n'
-DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"\n'
+DOCS_VERSION_FORMAT = 'version = "{major}.{minor}"'
+DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"'
 
 RELEASE_INI_PATTERN = r"^current_release\s*=\s*['\"]?([.\d\w]+)['\"]?$"
-RELEASE_INI_TEMPLATE = "current_release = {major}.{minor}.{release}\n"
+RELEASE_INI_TEMPLATE = "current_release = {major}.{minor}.{release}"
 
 
 # endregion Constants
@@ -58,15 +58,14 @@ RELEASE_INI_TEMPLATE = "current_release = {major}.{minor}.{release}\n"
 
 def load_release_file(release_file: Union[Path, str]) -> configparser.ConfigParser:
     """
-    Loads the release file and stores the config into the global :attr:`RELEASE_CONFIG`
+    Loads the release file
 
     :param release_file: Path to the release file
     :return: Loaded config
     """
-    global RELEASE_CONFIG
-    RELEASE_CONFIG = configparser.ConfigParser()
-    RELEASE_CONFIG.read(release_file)
-    return RELEASE_CONFIG
+    release_config = configparser.ConfigParser()
+    release_config.read(release_file)
+    return release_config
 
 
 def split_version(version: str) -> Tuple[str, str, str]:
@@ -86,7 +85,11 @@ def split_version(version: str) -> Tuple[str, str, str]:
 
 
 def update_file(
-    path: Path, pattern: str, template: str, version: Tuple[str, str, str], dry_run: Optional[bool] = False,
+    path: Path,
+    pattern: str,
+    template: str,
+    version: Tuple[str, str, str],
+    dry_run: Optional[bool] = False,
 ) -> Optional[str]:
     """
     Performs the **real** update of the `path` files, aka. replaces the row matched
@@ -114,13 +117,21 @@ def update_file(
             logging.debug(f"update_file({path}) a *MATCHING* row has been found:\n{counter} {row.strip()}")
             old_row = deepcopy(row)
             new_row = template.format(major=major, minor=minor, release=release)
+            if old_row.endswith("\r\n"):
+                new_row += "\r\n"
+            elif old_row.endswith("\r"):
+                new_row += "\r"
+            elif old_row.endswith("\n"):
+                new_row += "\n"
             break
 
     if old_row and new_row:
         logging.info(f"update_file({path}) old_row:\n{old_row.strip()}\nnew_row:\n{new_row.strip()}")
 
     if dry_run:
-        logging.info(f"update_file({path}) No operation performed, dry_run = {dry_run}",)
+        logging.info(
+            f"update_file({path}) No operation performed, dry_run = {dry_run}",
+        )
         return new_row
 
     if new_row and counter is not None:
@@ -134,7 +145,10 @@ def update_file(
 
 
 def update_node_packages(
-    path: Path, version: Tuple[str, str, str], key: str = NODE_KEY, dry_run: bool = False,
+    path: Path,
+    version: Tuple[str, str, str],
+    key: str = NODE_KEY,
+    dry_run: bool = False,
 ):
     """
     Updates the package.json file
@@ -174,7 +188,12 @@ class MyYAML(YAML):
             return stream.getvalue()
 
 
-def updates_yaml_file(path: Path, version: Tuple[str, str, str], key: str = ANSIBLE_KEY, dry_run: bool = False,) -> str:
+def updates_yaml_file(
+    path: Path,
+    version: Tuple[str, str, str],
+    key: str = ANSIBLE_KEY,
+    dry_run: bool = False,
+) -> str:
     """
     Replaces the version number in a YAML file, aka. ansible vars files
 

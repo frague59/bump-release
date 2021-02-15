@@ -2,4 +2,4 @@
 git:
   repository: ssh://git@gitlab.ville.tg/fguerin/agenda.git
   version: 0.0.1
-  release: 0.0.2
+  release: 0.1.0

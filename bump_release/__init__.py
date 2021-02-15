@@ -3,33 +3,54 @@ Update release numbers in various places, according to a release.ini file places
 """
 import configparser
 import logging
+import sys
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Optional, Tuple
 
 import click
+
 from bump_release import helpers
 from bump_release.helpers import split_version
 
-# region Constants
-__version__ = VERSION = "0.9.3"
-RELEASE_CONFIG: Optional[dict] = None
+# region Globals
+__version__ = VERSION = "0.9.4"
 RELEASE_FILE: Optional[Path] = None
-# endregion Constants
+RELEASE_CONFIG: Optional[ConfigParser] = None
+# endregion Globals
 
 
 @click.command()
 @click.option(
-    "-r", "--release-file", "release_file", help="Release file path, default `./release.ini`",
+    "-r",
+    "--release-file",
+    "release_file",
+    help="Release file path, default `./release.ini`",
 )
 @click.option(
-    "-n", "--dry-run", "dry_run", is_flag=True, help="If set, no operation are performed on files", default=False,
+    "-n",
+    "--dry-run",
+    "dry_run",
+    is_flag=True,
+    help="If set, no operation are performed on files",
+    default=False,
 )
 @click.option(
-    "-d", "--debug", "debug", is_flag=True, help="If set, more traces are printed for users", default=False,
+    "-d",
+    "--debug",
+    "debug",
+    is_flag=True,
+    help="If set, more traces are printed for users",
+    default=False,
 )
 @click.version_option(version=__version__)
 @click.argument("release")
-def bump_release(release: str, release_file: Optional[str] = None, dry_run: bool = False, debug: bool = False,) -> int:
+def bump_release(
+    release: str,
+    release_file: Optional[str] = None,
+    dry_run: bool = False,
+    debug: bool = False,
+) -> int:
     """
     Updates the files according to the release.ini file
 
@@ -41,13 +62,22 @@ def bump_release(release: str, release_file: Optional[str] = None, dry_run: bool
     """
     # Loads the release.ini file
     global RELEASE_CONFIG, RELEASE_FILE
+
     if release_file is None:
         RELEASE_FILE = Path.cwd() / "release.ini"
     else:
         RELEASE_FILE = Path(release_file)
 
+    if not RELEASE_FILE.exists():
+        print(f"Unable to find release.ini file in the current directory {Path.cwd()}", file=sys.stderr)
+        return 1
+
     RELEASE_CONFIG = helpers.load_release_file(release_file=RELEASE_FILE)
-    return process_update(release_file=RELEASE_FILE, release=release, dry_run=dry_run, debug=debug)
+    try:
+        return process_update(release_file=RELEASE_FILE, release=release, dry_run=dry_run, debug=debug)
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
 
 
 def process_update(release_file: Path, release: str, dry_run: bool, debug: bool = False) -> int:
@@ -99,7 +129,9 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     try:
         new_row = update_node_package(version=version, dry_run=dry_run)
         if new_row is not None:
-            logging.debug(f"process_update() `node`: new_row = {new_row}",)
+            logging.debug(
+                f"process_update() `node`: new_row = {new_row}",
+            )
     except helpers.NothingToDoException as e:
         logging.warning(f"process_update() No release section for `node`: {e}")
     # endregion
@@ -131,10 +163,18 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True) -> Opt
     :return: changed string
     """
     assert RELEASE_CONFIG is not None
+    if not RELEASE_CONFIG.has_section("main_project"):
+        raise helpers.NothingToDoException("No `main_project` section in release.ini file")
+
     try:
-        path = Path(RELEASE_CONFIG.get("main_project", "path"))
-        pattern = RELEASE_CONFIG.get("main_project", "pattern", fallback=helpers.MAIN_PROJECT_PATTERN)  # noqa
-        template = RELEASE_CONFIG.get("main_project", "template", fallback=helpers.MAIN_PROJECT_TEMPLATE)  # noqa
+        _path = RELEASE_CONFIG["main_project"].get("path")
+        if _path is None:
+            raise helpers.NothingToDoException("No action to perform for main project: No path provided.")
+        path = Path(_path)
+        pattern = RELEASE_CONFIG["main_project"].get("pattern") or helpers.MAIN_PROJECT_PATTERN
+        pattern = pattern.strip('"')
+        template = RELEASE_CONFIG["main_project"].get("template") or helpers.MAIN_PROJECT_TEMPLATE
+        template = template.strip('"')
     except configparser.Error as e:
         raise helpers.NothingToDoException("Unable to update main project file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
@@ -149,12 +189,19 @@ def update_setup_file(version: Tuple[str, str, str], dry_run: bool = False) -> O
     :return: changed string
     """
     assert RELEASE_CONFIG is not None
+    if not RELEASE_CONFIG.has_section("setup"):
+        raise helpers.NothingToDoException("No `setup` section in release.ini file")
+
     try:
-        path = Path(RELEASE_CONFIG.get("setup", "path"))
-        pattern = RELEASE_CONFIG.get("setup", "pattern", fallback=helpers.SETUP_PATTERN)  # noqa
-        template = RELEASE_CONFIG.get("setup", "template", fallback=helpers.SETUP_TEMPLATE)  # noqa
+        _path = RELEASE_CONFIG["setup"].get("path")
+        path = Path(_path)
+        pattern = RELEASE_CONFIG["setup"].get("pattern") or helpers.SETUP_PATTERN
+        pattern = pattern.strip('"')
+        template = RELEASE_CONFIG["setup"].get("template") or helpers.SETUP_TEMPLATE
+        template = template.strip('"')
+
     except configparser.Error as e:
-        raise helpers.NothingToDoException("Unable to update setup file", e)
+        raise helpers.NothingToDoException("No action to perform for setup file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
 
 
@@ -167,12 +214,18 @@ def update_sonar_properties(version: Tuple[str, str, str], dry_run: bool = False
     :return: changed string
     """
     assert RELEASE_CONFIG is not None
+    if not RELEASE_CONFIG.has_section("sonar"):
+        raise helpers.NothingToDoException("No `sonar` section in release.ini file")
+
     try:
-        path = Path(RELEASE_CONFIG.get("sonar", "path"))
-        pattern = RELEASE_CONFIG.get("sonar", "pattern", fallback=helpers.SONAR_PATTERN)  # noqa
-        template = RELEASE_CONFIG.get("sonar", "template", fallback=helpers.SONAR_TEMPLATE)  # noqa
+        _path = RELEASE_CONFIG["sonar"].get("path")
+        path = Path(_path)
+        pattern = RELEASE_CONFIG["sonar"].get("pattern") or helpers.SONAR_PATTERN
+        pattern = pattern.strip('"')
+        template = RELEASE_CONFIG["sonar"].get("template") or helpers.SONAR_TEMPLATE
+        template = template.strip('"')
     except configparser.Error as e:
-        raise helpers.NothingToDoException("Unable to update sonar properties file", e)
+        raise helpers.NothingToDoException("No action to perform for sonar file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
 
 
@@ -185,21 +238,40 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: bool = False) -> Op
     :return: changed string
     """
     assert RELEASE_CONFIG is not None
-    try:
-        path = Path(RELEASE_CONFIG.get("docs", "path"))
-        pattern_release = RELEASE_CONFIG.get("docs", "pattern_release", fallback=helpers.DOCS_RELEASE_PATTERN)  # noqa
-        template_release = RELEASE_CONFIG.get("docs", "template_release", fallback=helpers.DOCS_RELEASE_FORMAT)  # noqa
+    if not RELEASE_CONFIG.has_section("docs"):
+        raise helpers.NothingToDoException("No `docs` section in release.ini file")
 
-        pattern_version = RELEASE_CONFIG.get("docs", "pattern_version", fallback=helpers.DOCS_VERSION_PATTERN)  # noqa
-        template_version = RELEASE_CONFIG.get("docs", "re", fallback=helpers.DOCS_VERSION_FORMAT)  # noqa
+    try:
+        _path = RELEASE_CONFIG["docs"].get("path")
+        path = Path(_path)
+
+        pattern_release = RELEASE_CONFIG["docs"].get("pattern_release") or helpers.DOCS_RELEASE_PATTERN
+        pattern_release = pattern_release.strip('"')
+
+        template_release = RELEASE_CONFIG["docs"].get("template_release") or helpers.DOCS_RELEASE_FORMAT
+        template_release = template_release.strip('"')
+
+        pattern_version = RELEASE_CONFIG["docs"].get("pattern_version") or helpers.DOCS_VERSION_PATTERN
+        pattern_version = pattern_version.strip('"')
+
+        template_version = RELEASE_CONFIG["docs"].get("template_version") or helpers.DOCS_VERSION_FORMAT
+        template_version = pattern_version.strip('"')
     except configparser.Error as e:
-        raise helpers.NothingToDoException("Unable to update docs file", e)
+        raise helpers.NothingToDoException("No action to perform for docs file", e)
 
     update_release = helpers.update_file(
-        path=path, pattern=pattern_release, template=template_release, version=version, dry_run=dry_run,
+        path=path,
+        pattern=pattern_release,
+        template=template_release,
+        version=version,
+        dry_run=dry_run,
     )
     update_version = helpers.update_file(
-        path=path, pattern=pattern_version, template=template_version, version=version, dry_run=dry_run,
+        path=path,
+        pattern=pattern_version,
+        template=template_version,
+        version=version,
+        dry_run=dry_run,
     )
     return str(update_release) + str(update_version)
 
@@ -217,7 +289,7 @@ def update_node_package(version: Tuple[str, str, str], dry_run: bool = False) ->
         path = Path(RELEASE_CONFIG.get("node", "path"))
         key = RELEASE_CONFIG.get("node", "key", fallback=helpers.NODE_KEY)  # noqa
     except configparser.Error as e:
-        raise helpers.NothingToDoException("Unable to update node packages file", e)
+        raise helpers.NothingToDoException("No action to perform for node packages file", e)
     return helpers.update_node_packages(path=path, version=version, key=key, dry_run=dry_run)
 
 
@@ -234,7 +306,7 @@ def update_ansible_vars(version: Tuple[str, str, str], dry_run: bool = False) ->
         path = Path(RELEASE_CONFIG.get("ansible", "path"))
         key = RELEASE_CONFIG.get("ansible", "key", fallback=helpers.ANSIBLE_KEY)  # noqa
     except configparser.Error as e:
-        raise helpers.NothingToDoException("Unable to update ansible vars file", e)
+        raise helpers.NothingToDoException("No action to perform for ansible file", e)
     return helpers.updates_yaml_file(path=path, version=version, key=key, dry_run=dry_run)
 
 

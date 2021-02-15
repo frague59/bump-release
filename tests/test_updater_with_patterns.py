@@ -11,10 +11,12 @@ from bump_release import helpers
 
 logger = logging.getLogger("tests")
 
+MODULE_PATH = Path(__file__).parent
+
 
 @pytest.fixture
 def config():
-    release_ini_path = Path(__file__).parent / "fixtures" / "release.ini"
+    release_ini_path = Path(__file__).parent / "fixtures" / "release_with_patterns.ini"
     config = helpers.load_release_file(release_ini_path)
     logger.info("config() Config file loaded")
     assert config
@@ -23,7 +25,7 @@ def config():
 
 @pytest.fixture
 def version():
-    splited_version = helpers.split_version("0.0.2")
+    splited_version = helpers.split_version("0.1.0")
     return splited_version
 
 
@@ -41,74 +43,60 @@ def test_load_release_file(config):
     assert config.has_section("ansible"), "No `ansible` section in release.ini file"
 
 
-def test_version():
-    splited_version = helpers.split_version("0.0.1")
-    assert splited_version == (
-        "0",
-        "0",
-        "1",
-    ), "Version for `0.0.1` MUST BE ('0', '0', '1')"
-
-    splited_version = helpers.split_version("1.1.1")
-    assert splited_version == (
-        "1",
-        "1",
-        "1",
-    ), "Version for `1.1.1` MUST BE ('1', '1', '1')"
-
-    splited_version = helpers.split_version("1.1.1a")
-    assert splited_version == (
-        "1",
-        "1",
-        "1a",
-    ), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
-
-    splited_version = helpers.split_version("1.1.1b")
-    assert splited_version == (
-        "1",
-        "1",
-        "1b",
-    ), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
+def test_main_project_params(config):
+    assert config["main_project"].get("path")
+    assert config["main_project"].get("pattern")
+    assert config["main_project"].get("template")
 
 
 def test_update_main_project(config, version):
     str_path = config["main_project"].get("path")
     assert str_path is not None
     path = Path(str_path)
+    pattern = config["main_project"].get("pattern").strip('"')
+    template = config["main_project"].get("template").strip('"')
     new_row = helpers.update_file(
         path=path,
-        pattern=helpers.MAIN_PROJECT_PATTERN,
-        template=helpers.MAIN_PROJECT_TEMPLATE,
+        pattern=pattern or helpers.MAIN_PROJECT_PATTERN,
+        template=template or helpers.MAIN_PROJECT_TEMPLATE,
         version=version,
         dry_run=True,
     )
-    assert new_row.strip() == '__version__ = VERSION = "0.0.2"', "MAIN: Versions does not match"
+    assert new_row is not None, "MAIN: No row returned"
+    assert new_row.strip() == "__version__ = VERSION = '0.1.0'", "MAIN: Versions does not match"
 
 
 def test_update_sonar_properties(config, version):
     str_path = config["sonar"].get("path")
     assert str_path is not None
     path = Path(str_path)
+    pattern = config["sonar"].get("pattern").strip('"')
+    template = config["sonar"].get("template").strip('"')
     new_row = helpers.update_file(
         path=path,
-        pattern=helpers.SONAR_PATTERN,
-        template=helpers.SONAR_TEMPLATE,
+        pattern=pattern or helpers.SONAR_PATTERN,
+        template=template or helpers.SONAR_TEMPLATE,
         version=version,
         dry_run=True,
     )
-    assert new_row.strip() == "sonar.projectVersion=0.0", "SONAR: Versions does not match"
+    assert new_row is not None, "SONAR: No row returned"
+    assert new_row.strip() == "sonar.projectVersion=0.1", "SONAR: Versions does not match"
 
 
 def test_update_docs(config, version):
-    str_path = config.get("docs", "path")
+    str_path = config["docs"].get("path")
     assert str_path is not None
     path = Path(str_path)
 
-    version_pattern = config.get("docs", "version_pattern", fallback=helpers.DOCS_VERSION_PATTERN)
-    version_format = config.get("docs", "version_format", fallback=helpers.DOCS_VERSION_FORMAT)
+    version_pattern = config["docs"].get("version_pattern") or helpers.DOCS_VERSION_PATTERN
+    version_pattern = version_pattern.strip('"')
+    version_format = config["docs"].get("version_format") or helpers.DOCS_VERSION_FORMAT
+    version_format = version_format.strip('"')
 
-    release_pattern = config.get("docs", "release_pattern", fallback=helpers.DOCS_RELEASE_PATTERN)
-    release_format = config.get("docs", "release_format", fallback=helpers.DOCS_RELEASE_FORMAT)
+    release_pattern = config["docs"].get("release_pattern") or helpers.DOCS_RELEASE_PATTERN
+    release_pattern = release_pattern.strip('"')
+    release_format = config["docs"].get("release_format") or helpers.DOCS_RELEASE_FORMAT
+    release_format = release_format.strip('"')
 
     new_row = helpers.update_file(
         path=path,
@@ -117,7 +105,7 @@ def test_update_docs(config, version):
         version=version,
         dry_run=True,
     )
-    assert new_row.strip() == 'release = "0.0.2"', "DOCS: Versions does not match"
+    assert new_row.strip() == "release = '0.1.0'", "DOCS: Versions does not match"
 
     new_row = helpers.update_file(
         path=path,
@@ -126,7 +114,7 @@ def test_update_docs(config, version):
         version=version,
         dry_run=True,
     )
-    assert new_row.strip() == 'version = "0.0"', "DOCS: Versions does not match"
+    assert new_row.strip() == "version = '0.1'", "DOCS: Versions does not match"
 
 
 def test_update_node_packages(config, version):
