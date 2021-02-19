@@ -87,6 +87,7 @@ release_staging:
 
 release:
   stage: deploy
+  needs: [ flake8, tests ]
   before_script:
     - pip --cache-dir .pip/ install -r requirements-deploy.txt
   script: |
