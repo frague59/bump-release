@@ -2,6 +2,7 @@
 Tests for updaters
 """
 import logging
+import sys
 from pathlib import Path
 
 import pytest
@@ -45,16 +46,19 @@ def test_load_release_file(config):
 
 def test_main_project_params(config):
     assert config["main_project"].get("path")
-    assert config["main_project"].get("pattern")
-    assert config["main_project"].get("template")
+    assert config["main_project"].get("pattern", "")
+    assert config["main_project"].get("template", "")
 
 
 def test_update_main_project(config, version):
     str_path = config["main_project"].get("path")
     assert str_path is not None
     path = Path(str_path)
-    pattern = config["main_project"].get("pattern").strip('"')
-    template = config["main_project"].get("template").strip('"')
+    print(f"DEBUG::test_update_main_project() path = {path.absolute()}", file=sys.stderr)
+    pattern = config["main_project"].get("pattern", "").strip('"')
+    template = config["main_project"].get("template", "").strip('"')
+    assert pattern != "", "No `pattern` key found for `main_project` section"
+    assert template != "", "No `template` key found for `main_project` section"
     new_row = helpers.update_file(
         path=path,
         pattern=pattern or helpers.MAIN_PROJECT_PATTERN,
@@ -70,8 +74,13 @@ def test_update_sonar_properties(config, version):
     str_path = config["sonar"].get("path")
     assert str_path is not None
     path = Path(str_path)
-    pattern = config["sonar"].get("pattern").strip('"')
-    template = config["sonar"].get("template").strip('"')
+    print(f"DEBUG::test_update_sonar_properties() path = {path.absolute()}", file=sys.stderr)
+
+    pattern = config["sonar"].get("pattern", "").strip('"')
+    template = config["sonar"].get("template", "").strip('"')
+    assert pattern != "", "No `pattern` key found for `sonar` section"
+    assert template != "", "No `template` key found for `sonar` section"
+
     new_row = helpers.update_file(
         path=path,
         pattern=pattern or helpers.SONAR_PATTERN,
@@ -87,6 +96,7 @@ def test_update_docs(config, version):
     str_path = config["docs"].get("path")
     assert str_path is not None
     path = Path(str_path)
+    print(f"DEBUG::test_update_docs() path = {path.absolute()}", file=sys.stderr)
 
     version_pattern = config["docs"].get("version_pattern") or helpers.DOCS_VERSION_PATTERN
     version_pattern = version_pattern.strip('"')
@@ -97,6 +107,12 @@ def test_update_docs(config, version):
     release_pattern = release_pattern.strip('"')
     release_format = config["docs"].get("release_format") or helpers.DOCS_RELEASE_FORMAT
     release_format = release_format.strip('"')
+
+    assert version_pattern != "", "No `version_pattern` key found for `docs` section"
+    assert version_format != "", "No `version_format` key found for `docs` section"
+
+    assert release_pattern != "", "No `release_pattern` key found for `docs` section"
+    assert release_format != "", "No `release_format` key found for `docs` section"
 
     new_row = helpers.update_file(
         path=path,
@@ -125,6 +141,8 @@ def test_update_node_packages(config, version):
     )
     assert str_path is not None
     path = Path(str_path)
+    print(f"DEBUG::test_update_node_packages() path = {path.absolute()}", file=sys.stderr)
+
     key = config.get("node", "key", fallback=helpers.NODE_KEY)
     new_content = helpers.update_node_packages(path=path, version=version, key=key)
     assert new_content, "NODE: New content cannot be empty"
@@ -135,6 +153,8 @@ def test_update_ansible(config, version):
     key = config.get("ansible", "key", fallback="git.release")
     assert str_path is not None
     path = Path(str_path)
+    print(f"DEBUG::test_update_ansible() path = {path.absolute()}", file=sys.stderr)
+
     new_content = helpers.updates_yaml_file(path=path, version=version, key=key)
     assert new_content, "ANSIBLE: New content cannot be empty"
 
