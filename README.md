@@ -1,3 +1,6 @@
+ [![pipeline status](https://gitlab.ville.tg/fguerin/bump-release/badges/master/pipeline.svg)](https://gitlab.ville.tg/fguerin/bump-release/-/commits/master)
+ [![coverage report](https://gitlab.ville.tg/fguerin/bump-release/badges/master/coverage.svg)](https://gitlab.ville.tg/fguerin/bump-release/-/commits/master)
+
 # Updates the release numbers for a projects
 
 This script uses the release.ini file placed at the root of the project, and replaces the version or release number in various files.
