@@ -43,48 +43,6 @@ flake8:
     - python3.7
     - docker
 
-# Check code quality against sonarqube
-# Checks python/js/css code against SONAR
-sonar:
-  stage: lint
-  variables:
-    SONAR_VERSION: 4.3.0.2102-linux
-    SONAR_SCANNER_OPTS: "-Xmx512m"
-    SONAR_HOST: "http://sonarqube.ville.tg/"
-    # yamllint disable-line rule:line-length
-    SONAR_SCANNER_URL: https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}.zip
-  before_script:
-    - pip --cache-dir .pip/ install -r requirements-sonar.txt
-    - apt-get --yes -qq update
-    - apt-get --yes -qq install openjdk-11-jre-headless
-    # Installs sonar-runner ZIP file
-    - if [[ ! -d sonar-scanner-${SONAR_VERSION} ]]; then
-    - wget --no-verbose ${SONAR_SCANNER_URL}
-    - unzip -q sonar-scanner-cli-${SONAR_VERSION}.zip
-    - fi
-    - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/
-    - test $DEBUG_SONAR -eq 1 && ls -la sonar-scanner-${SONAR_VERSION}/bin/
-    # yamllint disable-line rule:line-length
-    - test $DEBUG_SONAR -eq 1 && sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner --version
-  script: |
-    # Runs the sonar-runner
-    export SONAR_USER_HOME=.
-    export SONAR_SCANNER_OPTS=${SONAR_SCANNER_OPTS}
-    export PYTHONPATH=${PYTHONPATH}:.
-    SONAR_ARGS=
-    if [[ ${DEBUG_SONAR} -eq 1 ]]; then
-      EXTRA_ARGS=${EXTRA_ARGS} -X
-    fi
-    # yamllint disable-line rule:line-length
-    ./sonar-scanner-${SONAR_VERSION}/bin/sonar-scanner -Dsonar.branch=${CI_COMMIT_BRANCH} -Dsonar.host.url=${SONAR_HOST}
-  cache:
-    paths:
-      - sonar-scanner-${SONAR_VERSION}/
-      - .pip/
-  tags:
-    - python3.7
-    - docker
-
 # Builds sphinx docs
 pages:
   stage: build
