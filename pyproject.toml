@@ -31,11 +31,3 @@ known_third_party = [
 known_first_party = [
     "bump_release"
 ]
-
-
-[tool.flake8]
-max-line-length = 120
-ignore = [
-    "F405",
-    "W503"
-]
