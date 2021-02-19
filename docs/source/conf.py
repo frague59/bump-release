@@ -26,7 +26,7 @@ author = "François GUÉRIN <fguerin@ville-tourcoing.fr>"
 
 # The full release, including alpha/beta/rc tags
 version = "0.9"
-release = "0.9.4"
+release = "0.9.5"
 
 
 # -- General configuration ---------------------------------------------------
