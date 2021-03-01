@@ -24,33 +24,33 @@ RELEASE_CONFIG = None
 BASE_DIR = os.getcwd()
 # region Constants
 # Node (JSON value update)
-NODE_KEY = "version"
-NODE_PACKAGE_FILE = "package.json"
+NODE_KEY: str = "version"
+NODE_PACKAGE_FILE: str = "package.json"
 
 # main (re search and replace)
-MAIN_PROJECT_PATTERN = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
-MAIN_PROJECT_TEMPLATE = '__version__ = VERSION = "{major}.{minor}.{release}"'
+MAIN_PROJECT_PATTERN: str = r"^__version__\s*=\s*VERSION\s*=\s*['\"][.\d\w]+['\"]$"
+MAIN_PROJECT_TEMPLATE: str = '__version__ = VERSION = "{major}.{minor}.{release}"'
 
 # Ansible yaml key
-ANSIBLE_KEY = "git.version"
+ANSIBLE_KEY: str = "git.version"
 
 # sonar (re search and replace)
-SONAR_PATTERN = r"^sonar.projectVersion=([.\d]+)$"
-SONAR_TEMPLATE = "sonar.projectVersion={major}.{minor}"
+SONAR_PATTERN: str = r"^sonar.projectVersion=([.\d]+)$"
+SONAR_TEMPLATE: str = "sonar.projectVersion={major}.{minor}"
 
 # setup.py file
-SETUP_PATTERN = r"^\s*version=['\"]([.\d\w]+)['\"],$"
-SETUP_TEMPLATE = '    version="{major}.{minor}.{release}",'
+SETUP_PATTERN: str = r"^\s*version=['\"]([.\d\w]+)['\"],$"
+SETUP_TEMPLATE: str = '    version="{major}.{minor}.{release}",'
 
 
 # Sphinx (re search and replace)
-DOCS_VERSION_PATTERN = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"
-DOCS_RELEASE_PATTERN = r"^release\s*=\s*[\"']([.\d\w]+)[\"']$"
-DOCS_VERSION_FORMAT = 'version = "{major}.{minor}"'
-DOCS_RELEASE_FORMAT = 'release = "{major}.{minor}.{release}"'
+DOCS_VERSION_PATTERN: str = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"
+DOCS_RELEASE_PATTERN: str = r"^release\s*=\s*[\"']([.\d\w]+)[\"']$"
+DOCS_VERSION_FORMAT: str = 'version = "{major}.{minor}"'
+DOCS_RELEASE_FORMAT: str = 'release = "{major}.{minor}.{release}"'
 
-RELEASE_INI_PATTERN = r"^current_release\s*=\s*['\"]?([.\d\w]+)['\"]?$"
-RELEASE_INI_TEMPLATE = "current_release = {major}.{minor}.{release}"
+RELEASE_INI_PATTERN: str = r"^current_release\s*=\s*['\"]?([.\d\w]+)['\"]?$"
+RELEASE_INI_TEMPLATE: str = "current_release = {major}.{minor}.{release}"
 
 
 # endregion Constants
@@ -149,7 +149,7 @@ def update_node_packages(
     version: Tuple[str, str, str],
     key: str = NODE_KEY,
     dry_run: bool = False,
-):
+) -> str:
     """
     Updates the package.json file
 
@@ -226,8 +226,12 @@ class UpdateException(Exception):
     An error has occurred during the release updating
     """
 
+    pass
+
 
 class NothingToDoException(UpdateException):
     """
     An error has occurred during the release updating: Nothing to do...
     """
+
+    pass
