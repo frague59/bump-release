@@ -14,7 +14,7 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Globals
-__version__ = VERSION = "0.9.5"
+__version__ = VERSION = "0.9.6"
 RELEASE_FILE: Optional[Path] = None
 RELEASE_CONFIG: Optional[ConfigParser] = None
 # endregion Globals
@@ -171,10 +171,8 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True) -> Opt
         if _path is None:
             raise helpers.NothingToDoException("No action to perform for main project: No path provided.")
         path = Path(_path)
-        pattern = RELEASE_CONFIG["main_project"].get("pattern") or helpers.MAIN_PROJECT_PATTERN
-        pattern = pattern.strip('"')
-        template = RELEASE_CONFIG["main_project"].get("template") or helpers.MAIN_PROJECT_TEMPLATE
-        template = template.strip('"')
+        pattern = RELEASE_CONFIG["main_project"].get("pattern", "").strip('"') or helpers.MAIN_PROJECT_PATTERN
+        template = RELEASE_CONFIG["main_project"].get("template", "").strip('"') or helpers.MAIN_PROJECT_TEMPLATE
     except configparser.Error as e:
         raise helpers.NothingToDoException("Unable to update main project file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
@@ -195,10 +193,8 @@ def update_setup_file(version: Tuple[str, str, str], dry_run: bool = False) -> O
     try:
         _path = RELEASE_CONFIG["setup"].get("path")
         path = Path(_path)
-        pattern = RELEASE_CONFIG["setup"].get("pattern") or helpers.SETUP_PATTERN
-        pattern = pattern.strip('"')
-        template = RELEASE_CONFIG["setup"].get("template") or helpers.SETUP_TEMPLATE
-        template = template.strip('"')
+        pattern = RELEASE_CONFIG["setup"].get("pattern", "").strip('"') or helpers.SETUP_PATTERN
+        template = RELEASE_CONFIG["setup"].get("template", "").strip('"') or helpers.SETUP_TEMPLATE
 
     except configparser.Error as e:
         raise helpers.NothingToDoException("No action to perform for setup file", e)
@@ -220,10 +216,8 @@ def update_sonar_properties(version: Tuple[str, str, str], dry_run: bool = False
     try:
         _path = RELEASE_CONFIG["sonar"].get("path")
         path = Path(_path)
-        pattern = RELEASE_CONFIG["sonar"].get("pattern") or helpers.SONAR_PATTERN
-        pattern = pattern.strip('"')
-        template = RELEASE_CONFIG["sonar"].get("template") or helpers.SONAR_TEMPLATE
-        template = template.strip('"')
+        pattern = RELEASE_CONFIG["sonar"].get("pattern", "").strip('"') or helpers.SONAR_PATTERN
+        template = RELEASE_CONFIG["sonar"].get("template", "").strip('"') or helpers.SONAR_TEMPLATE
     except configparser.Error as e:
         raise helpers.NothingToDoException("No action to perform for sonar file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
@@ -245,17 +239,11 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: bool = False) -> Op
         _path = RELEASE_CONFIG["docs"].get("path")
         path = Path(_path)
 
-        pattern_release = RELEASE_CONFIG["docs"].get("pattern_release") or helpers.DOCS_RELEASE_PATTERN
-        pattern_release = pattern_release.strip('"')
+        pattern_release = RELEASE_CONFIG["docs"].get("pattern_release", "").strip('"') or helpers.DOCS_RELEASE_PATTERN
+        template_release = RELEASE_CONFIG["docs"].get("template_release", "").strip('"') or helpers.DOCS_RELEASE_FORMAT
+        pattern_version = RELEASE_CONFIG["docs"].get("pattern_version", "").strip('"') or helpers.DOCS_VERSION_PATTERN
+        template_version = RELEASE_CONFIG["docs"].get("template_version", "").strip('"') or helpers.DOCS_VERSION_FORMAT
 
-        template_release = RELEASE_CONFIG["docs"].get("template_release") or helpers.DOCS_RELEASE_FORMAT
-        template_release = template_release.strip('"')
-
-        pattern_version = RELEASE_CONFIG["docs"].get("pattern_version") or helpers.DOCS_VERSION_PATTERN
-        pattern_version = pattern_version.strip('"')
-
-        template_version = RELEASE_CONFIG["docs"].get("template_version") or helpers.DOCS_VERSION_FORMAT
-        template_version = pattern_version.strip('"')
     except configparser.Error as e:
         raise helpers.NothingToDoException("No action to perform for docs file", e)
 
