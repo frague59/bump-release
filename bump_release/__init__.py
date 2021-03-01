@@ -14,7 +14,7 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Globals
-__version__ = VERSION = "0.9.5"
+__version__ = VERSION = "0.9.6"
 RELEASE_FILE: Optional[Path] = None
 RELEASE_CONFIG: Optional[ConfigParser] = None
 # endregion Globals
@@ -243,6 +243,7 @@ def update_docs_conf(version: Tuple[str, str, str], dry_run: bool = False) -> Op
         template_release = RELEASE_CONFIG["docs"].get("template_release", "").strip('"') or helpers.DOCS_RELEASE_FORMAT
         pattern_version = RELEASE_CONFIG["docs"].get("pattern_version", "").strip('"') or helpers.DOCS_VERSION_PATTERN
         template_version = RELEASE_CONFIG["docs"].get("template_version", "").strip('"') or helpers.DOCS_VERSION_FORMAT
+
     except configparser.Error as e:
         raise helpers.NothingToDoException("No action to perform for docs file", e)
 
