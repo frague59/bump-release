@@ -97,6 +97,15 @@ pattern = "^\s*version=['\"]([.\d]+)['\"],$"
 template = "    version='{major}.{minor}.{release}',"
 ```
 
+[setup_cfg]
+path = <project>/setup.cfg
+# Optional pattern, default is...
+pattern = "^version = ([.\d]+)$"
+# Optional template, default is...
+template = "version = {major}.{minor}.{release}"
+```
+
+
 ## Usage
 
 ```bash
