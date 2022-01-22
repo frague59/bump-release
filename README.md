@@ -32,6 +32,7 @@ Assume to have `~/.local/bin` in the `$PATH`.
 + sphinx docs
 + ansible variables in a vars file
 + setup.py
++ setup.cfg
 
 ## release.ini
 
