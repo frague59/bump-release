@@ -42,6 +42,10 @@ SONAR_TEMPLATE: str = "sonar.projectVersion={major}.{minor}"
 SETUP_PATTERN: str = r"^\s*version=['\"]([.\d\w]+)['\"],$"
 SETUP_TEMPLATE: str = '    version="{major}.{minor}.{release}",'
 
+# setup.cfg file
+SETUP_CFG_PATTERN: str = r"^version = ([.\d\w]+)"
+SETUP_CFG_TEMPLATE: str = "version = {major}.{minor}.{release}"
+
 
 # Sphinx (re search and replace)
 DOCS_VERSION_PATTERN: str = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"

@@ -116,6 +116,15 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
         logging.warning(f"process_update() No release section for `setup`: {e}")
     # endregion
 
+    # region Update setup.cfg file
+    try:
+        new_row = update_setup_cfg_file(version=version, dry_run=dry_run)
+        if new_row is not None:
+            logging.debug(f"process_update() `setup`: new_row = {new_row.strip()}")
+    except helpers.NothingToDoException as e:
+        logging.warning(f"process_update() No release section for `setup`: {e}")
+    # endregion Update setup.cfg file
+
     # region Updates sphinx file
     try:
         new_row = update_docs_conf(version=version, dry_run=dry_run)
@@ -156,7 +165,7 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
 
 def update_main_file(version: Tuple[str, str, str], dry_run: bool = True) -> Optional[str]:
     """
-    Updates the main django settings file, or a python script with
+    Updates the main django settings file, or a python script with a __init__.py file.
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -180,7 +189,7 @@ def update_main_file(version: Tuple[str, str, str], dry_run: bool = True) -> Opt
 
 def update_setup_file(version: Tuple[str, str, str], dry_run: bool = False) -> Optional[str]:
     """
-    Updates the setup.py file
+    Updates the setup.py file.
 
     :param version: Release number tuple (major, minor, release)
     :param dry_run: If `True`, no operation performed
@@ -200,6 +209,28 @@ def update_setup_file(version: Tuple[str, str, str], dry_run: bool = False) -> O
         raise helpers.NothingToDoException("No action to perform for setup file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
 
+
+def update_setup_cfg_file(version: Tuple[str, str, str], dry_run: bool = False) -> Optional[str]:
+    """
+    Update the setup.cfg file.
+
+    :param version: Release number tuple (major, minor, release)
+    :param dry_run: If `True`, no operation performed
+    :return: changed string
+    """
+    assert RELEASE_CONFIG is not None
+    if not RELEASE_CONFIG.has_section("setup_cfg"):
+        raise helpers.NothingToDoException("No `setup_cfg` section in release.ini file")
+    
+    try:
+        _path = RELEASE_CONFIG["setup_cfg"].get("path")
+        path = Path(_path)
+        pattern = RELEASE_CONFIG["setup_cfg"].get("pattern", "").strip('"') or helpers.SETUP_CFG_PATTERN
+        template = RELEASE_CONFIG["setup_cfg"].get("template", "").strip('"') or helpers.SETUP_CFG_TEMPLATE
+
+    except configparser.Error as e:
+        raise helpers.NothingToDoException("No action to perform for setup.cfg file", e)
+    return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
 
 def update_sonar_properties(version: Tuple[str, str, str], dry_run: bool = False) -> Optional[str]:
     """
