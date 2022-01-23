@@ -1,5 +1,16 @@
 """
-Update release numbers in various places, according to a release.ini file places at the project root
+Update release numbers in various places, according to a release.ini file places at the project root.
+
+For now, the following sections are supported:
+
++ Main file (__init__.py, Django settings file, etc.) 
++ Sphinx conf.py file
++ sonar-project.properties
++ ansible vars file
++ node package.json file
++ setup.cfg
++ setup.py
+
 """
 import configparser
 import logging
@@ -14,9 +25,11 @@ from bump_release import helpers
 from bump_release.helpers import split_version
 
 # region Globals
-__version__ = VERSION = "0.9.6"
+__version__ = VERSION = "0.9.7"
 RELEASE_FILE: Optional[Path] = None
 RELEASE_CONFIG: Optional[ConfigParser] = None
+
+
 # endregion Globals
 
 
@@ -26,6 +39,8 @@ RELEASE_CONFIG: Optional[ConfigParser] = None
     "--release-file",
     "release_file",
     help="Release file path, default `./release.ini`",
+    type=click.Path(exists=True),
+    default="release.ini",
 )
 @click.option(
     "-n",
@@ -52,13 +67,25 @@ def bump_release(
     debug: bool = False,
 ) -> int:
     """
-    Updates the files according to the release.ini file
+    Update release numbers in various places, according to a release.ini file places at the project root.
 
-    :param release: Version number, as "X.X.X"
-    :param release_file: path to the release.ini config file
+    \b
+    For now, the following sections are supported:
+
+    \b
+    + Main file (__init__.py, Django settings file, etc.)
+    + Sphinx conf.py file
+    + sonar-project.properties
+    + ansible vars file
+    + node package.json file
+    + setup.cfg
+    + setup.py
+    \f
+    :param release: Release number
+    :param release_file: Release file path, default `./release.ini`
     :param dry_run: If `True`, no operation performed
-    :param debug: If `True`, more traces !
-    :return: 0 if no error...
+    :param debug: If `True`, more traces are printed for users
+    :return: 0 if success, 1|2 if error
     """
     # Loads the release.ini file
     global RELEASE_CONFIG, RELEASE_FILE
@@ -221,7 +248,7 @@ def update_setup_cfg_file(version: Tuple[str, str, str], dry_run: bool = False) 
     assert RELEASE_CONFIG is not None
     if not RELEASE_CONFIG.has_section("setup_cfg"):
         raise helpers.NothingToDoException("No `setup_cfg` section in release.ini file")
-    
+
     try:
         _path = RELEASE_CONFIG["setup_cfg"].get("path")
         path = Path(_path)
@@ -231,6 +258,7 @@ def update_setup_cfg_file(version: Tuple[str, str, str], dry_run: bool = False) 
     except configparser.Error as e:
         raise helpers.NothingToDoException("No action to perform for setup.cfg file", e)
     return helpers.update_file(path=path, pattern=pattern, template=template, version=version, dry_run=dry_run)
+
 
 def update_sonar_properties(version: Tuple[str, str, str], dry_run: bool = False) -> Optional[str]:
     """

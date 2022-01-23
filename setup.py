@@ -12,7 +12,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bump_release",
-    version="0.9.6",
+    version="0.9.7",
     author="François GUÉRIN",
     author_email="fguerin@ville-tourcoing.fr",
     url="https://github.com/frague59/bump-release",

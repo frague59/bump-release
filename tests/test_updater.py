@@ -23,8 +23,8 @@ def config():
 
 @pytest.fixture
 def version():
-    splited_version = helpers.split_version("0.0.2")
-    return splited_version
+    split_version = helpers.split_version("0.0.2")
+    return split_version
 
 
 def test_load_release_file(config):
@@ -38,43 +38,41 @@ def test_load_release_file(config):
     assert config.has_section("sonar"), "No `sonar` section in release.ini file"
     assert config.has_section("docs"), "No `docs` section in release.ini file"
     assert config.has_section("setup"), "No `setup` section in release.ini file"
+    assert config.has_section("setup_cfg"), "No `setup` section in release.ini file"
     assert config.has_section("ansible"), "No `ansible` section in release.ini file"
 
 
 def test_version():
-    splited_version = helpers.split_version("0.0.1")
-    assert splited_version == (
+    split_version = helpers.split_version("0.0.1")
+    assert split_version == (
         "0",
         "0",
         "1",
     ), "Version for `0.0.1` MUST BE ('0', '0', '1')"
 
-    splited_version = helpers.split_version("1.1.1")
-    assert splited_version == (
+    split_version = helpers.split_version("1.1.1")
+    assert split_version == (
         "1",
         "1",
         "1",
     ), "Version for `1.1.1` MUST BE ('1', '1', '1')"
 
-    splited_version = helpers.split_version("1.1.1a")
-    assert splited_version == (
+    split_version = helpers.split_version("1.1.1a")
+    assert split_version == (
         "1",
         "1",
         "1a",
     ), "Version for `1.1.1a` MUST BE ('1', '1', '1a')"
 
-    splited_version = helpers.split_version("1.1.1b")
-    assert splited_version == (
-        "1",
-        "1",
-        "1b",
-    ), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
+    split_version = helpers.split_version("1.1.1b")
+    assert split_version == ("1", "1", "1b"), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
 
 
 def test_update_main_project(config, version):
     str_path = config["main_project"].get("path")
     assert str_path is not None
     path = Path(str_path)
+    assert path.exists(), f"MAIN_PROJECT: Path does not exist: {path}"
     new_row = helpers.update_file(
         path=path,
         pattern=helpers.MAIN_PROJECT_PATTERN,
