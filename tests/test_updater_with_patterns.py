@@ -41,6 +41,7 @@ def test_load_release_file(config):
     assert config.has_section("sonar"), "No `sonar` section in release.ini file"
     assert config.has_section("docs"), "No `docs` section in release.ini file"
     assert config.has_section("setup"), "No `setup` section in release.ini file"
+    assert config.has_section("setup_cfg"), "No `setup_cfg` section in release.ini file"
     assert config.has_section("ansible"), "No `ansible` section in release.ini file"
 
 
@@ -175,6 +176,19 @@ def test_full_main_project(config, version):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_main_file(version=version, dry_run=True)
     assert result is not None
+
+
+def test_full_setup(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_setup_file(version=version, dry_run=True)
+    assert result is not None
+
+
+def test_full_setup_cfg_file(config, version):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_setup_cfg_file(version=version, dry_run=True)
+    assert result is not None
+
 
 
 def test_full_node_package(config, version):
