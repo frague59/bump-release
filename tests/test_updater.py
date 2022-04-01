@@ -2,7 +2,10 @@
 Tests for updaters
 """
 import logging
+import re
+from configparser import ConfigParser
 from pathlib import Path
+from typing import Tuple
 
 import pytest
 
@@ -40,6 +43,7 @@ def test_load_release_file(config):
     assert config.has_section("setup"), "No `setup` section in release.ini file"
     assert config.has_section("setup_cfg"), "No `setup` section in release.ini file"
     assert config.has_section("ansible"), "No `ansible` section in release.ini file"
+    assert config.has_section("pyproject"), "No `pyproject` section in release.ini file"
 
 
 def test_version():
@@ -68,7 +72,7 @@ def test_version():
     assert split_version == ("1", "1", "1b"), "Version for `1.1.1b` MUST BE ('1', '1', '1b')"
 
 
-def test_update_main_project(config, version):
+def test_update_main_project(config: ConfigParser, version: Tuple[str, str, str]):
     str_path = config["main_project"].get("path")
     assert str_path is not None
     path = Path(str_path)
@@ -83,7 +87,7 @@ def test_update_main_project(config, version):
     assert new_row.strip() == '__version__ = VERSION = "0.0.2"', "MAIN: Versions does not match"
 
 
-def test_update_sonar_properties(config, version):
+def test_update_sonar_properties(config: ConfigParser, version: Tuple[str, str, str]):
     str_path = config["sonar"].get("path")
     assert str_path is not None
     path = Path(str_path)
@@ -97,7 +101,7 @@ def test_update_sonar_properties(config, version):
     assert new_row.strip() == "sonar.projectVersion=0.0", "SONAR: Versions does not match"
 
 
-def test_update_docs(config, version):
+def test_update_docs(config: ConfigParser, version: Tuple[str, str, str]):
     str_path = config.get("docs", "path")
     assert str_path is not None
     path = Path(str_path)
@@ -127,7 +131,7 @@ def test_update_docs(config, version):
     assert new_row.strip() == 'version = "0.0"', "DOCS: Versions does not match"
 
 
-def test_update_node_packages(config, version):
+def test_update_node_packages(config: ConfigParser, version: Tuple[str, str, str]):
     str_path = config.get(
         "node",
         "path",
@@ -140,7 +144,7 @@ def test_update_node_packages(config, version):
     assert new_content, "NODE: New content cannot be empty"
 
 
-def test_update_ansible(config, version):
+def test_update_ansible(config: ConfigParser, version: Tuple[str, str, str]):
     str_path = config.get("ansible", "path", fallback="vars.yml")
     key = config.get("ansible", "key", fallback="git.release")
     assert str_path is not None
@@ -149,31 +153,46 @@ def test_update_ansible(config, version):
     assert new_content, "ANSIBLE: New content cannot be empty"
 
 
-def test_full_update_ansible(config, version):
+def test_full_update_ansible(config: ConfigParser, version: Tuple[str, str, str]):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_ansible_vars(version=version, dry_run=True)
-    assert result is not None
+    assert result is not None, "ANSIBLE: New content cannot be empty"
 
 
-def test_full_docs_conf(config, version):
+def test_full_docs_conf(config: ConfigParser, version: Tuple[str, str, str]):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_docs_conf(version=version, dry_run=True)
-    assert result is not None
+    assert result is not None, "DOCS: New content cannot be empty"
 
 
-def test_full_main_project(config, version):
+def test_full_main_project(config: ConfigParser, version: Tuple[str, str, str]):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_main_file(version=version, dry_run=True)
-    assert result is not None
+    assert result is not None, "MAIN: New content cannot be empty"
 
 
-def test_full_node_package(config, version):
+def test_full_node_package(config: ConfigParser, version: Tuple[str, str, str]):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_node_package(version=version, dry_run=True)
-    assert result is not None
+    assert result is not None, "NODE: New content cannot be empty"
 
 
-def test_full_sonar_properties(config, version):
+def test_full_sonar_properties(config: ConfigParser, version: Tuple[str, str, str]):
     bump_release.RELEASE_CONFIG = config
     result = bump_release.update_node_package(version=version, dry_run=True)
-    assert result is not None
+    assert result is not None, "SONAR: New content cannot be empty"
+
+
+def test_pyproject(config: ConfigParser, version: Tuple[str, str, str]):
+    bump_release.RELEASE_CONFIG = config
+    result = bump_release.update_pyproject(version=version, dry_run=True)
+    assert result, "PYPROJECT: New content cannot be empty"
+    rows = result.split("\n")
+    regex = re.compile(r"""^version = ['"](\w+)\.(\w+)\.(\w+)['"]$""")
+    found = False
+    for row in rows:
+        match = regex.match(row)
+        if match and match.group(1) == version[0] and match.group(2) == version[1] and match.group(3) == version[2]:
+            found = True
+            break
+    assert found, "PYPROJECT: Version not found"

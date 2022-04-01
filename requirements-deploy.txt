@@ -1,2 +1,4 @@
+setuptools>=61
+wheel
 twine
 build

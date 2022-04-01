@@ -6,6 +6,7 @@ helpers for :mod:`bump_release` application
 :modulename: bump_release.helpers
 
 """
+import collections
 import configparser
 import json
 import logging
@@ -13,7 +14,7 @@ import os
 import re
 from copy import deepcopy
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Any, Dict
 
 from ruamel.yaml import YAML
 from ruamel.yaml.compat import StringIO
@@ -46,6 +47,8 @@ SETUP_TEMPLATE: str = '    version="{major}.{minor}.{release}",'
 SETUP_CFG_PATTERN: str = r"^version = ([.\d\w]+)"
 SETUP_CFG_TEMPLATE: str = "version = {major}.{minor}.{release}"
 
+# pyproject.toml file
+PYPROJECT_KEY = "project.version"
 
 # Sphinx (re search and replace)
 DOCS_VERSION_PATTERN: str = r"^version\s*=\s*[\"']([.\d\w]+)[\"']$"
@@ -207,14 +210,14 @@ def updates_yaml_file(
     :param dry_run: If True, no action is performed
     :returns: new file content
     """
-    splited_key = key.split(".")
     full_version = ".".join(version)
     yaml = MyYAML()
     with path.open(mode="r") as vars_file:
         document = yaml.load(vars_file)
     node = document
-    for _key in splited_key:
-        if _key == splited_key[-1] and not dry_run:
+    split_key = key.split(".")
+    for _key in split_key:
+        if _key == split_key[-1] and not dry_run:
             node.update({_key: full_version})
         node = node.get(_key)
     logging.debug(f"updates_yml_file({vars_file}) node value = {node}")
@@ -222,6 +225,36 @@ def updates_yaml_file(
     if not dry_run:
         with path.open(mode="w") as vars_file:
             vars_file.write(new_content)
+    return new_content
+
+
+def update_toml_file(path: Path, version: Tuple[str, str, str], key: str = PYPROJECT_KEY, dry_run: bool = False) -> str:
+    """
+    Update a toml file with the new version.
+    """
+    try:
+        import tomli
+        import tomli_w
+    except ImportError as ie:
+        raise UpdateException(f"update_toml_file() Unable to perform {path} update: tomli not found", ie)
+    with path.open(mode="r") as toml_file:
+        document = tomli.loads(toml_file.read())
+
+    # Update the version
+    full_version = ".".join(version)
+    split_key = key.split(".")
+
+    node = document
+    for _key in split_key:
+        if _key == split_key[-1]:
+            node.update({_key: full_version})
+        node = node.get(_key)
+
+    # Write the updated file
+    new_content = tomli_w.dumps(document)
+    if not dry_run:
+        with path.open(mode="w") as toml_file:
+            toml_file.write(new_content)
     return new_content
 
 

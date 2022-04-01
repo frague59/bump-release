@@ -3,7 +3,7 @@ Update release numbers in various places, according to a release.ini file places
 
 For now, the following sections are supported:
 
-+ Main file (__init__.py, Django settings file, etc.) 
++ Main file (__init__.py, Django settings file, etc.)
 + Sphinx conf.py file
 + sonar-project.properties
 + ansible vars file
@@ -22,7 +22,6 @@ from typing import Optional, Tuple
 import click
 
 from bump_release import helpers
-from bump_release.helpers import split_version
 
 # region Globals
 __version__ = VERSION = "0.9.7"
@@ -80,6 +79,8 @@ def bump_release(
     + node package.json file
     + setup.cfg
     + setup.py
+    + pyproject.toml (Require using `pip install bump_release[toml]`)
+
     \f
     :param release: Release number
     :param release_file: Release file path, default `./release.ini`
@@ -108,7 +109,16 @@ def bump_release(
 
 
 def process_update(release_file: Path, release: str, dry_run: bool, debug: bool = False) -> int:
-    version = split_version(release)
+    """
+    Processes the update of the release number.
+
+    :param release_file: Release file path
+    :param release: Release number
+    :param dry_run: If `True`, no operation performed
+    :param debug: If `True`, more traces are printed for users
+    :return: 0 if success, 1|2 if error
+    """
+    version = helpers.split_version(release)
 
     # Initialize the logging
     if debug:
@@ -186,6 +196,19 @@ def process_update(release_file: Path, release: str, dry_run: bool, debug: bool 
     if new_row is not None:
         logging.warning(f"process_update() `release.ini`: new_row = {new_row.strip()}")
     # endregion
+
+    # region Updates pyproject.toml file
+    try:
+        new_row = update_pyproject(version=version, dry_run=dry_run)
+        if new_row is not None:
+            logging.debug(f"process_update() `pyproject.toml`: new_row = {new_row.strip()}")
+    except helpers.NothingToDoException as e:
+        logging.warning(f"process_update() No release section for `pyproject.toml`: {e}")
+    except helpers.UpdateException:  # noqa: E722
+        logging.exception("process_update() `pyproject.toml`: UpdateException - tomli / tomli_w might be missing")
+        return 4
+
+    # endregion Updates pyproject.toml file
 
     return 0
 
@@ -371,5 +394,30 @@ def update_release_ini(path: Path, version: Tuple[str, str, str], dry_run: bool 
         pattern=helpers.RELEASE_INI_PATTERN,
         template=helpers.RELEASE_INI_TEMPLATE,
         version=version,
+        dry_run=dry_run,
+    )
+
+
+def update_pyproject(version: Tuple[str, str, str], dry_run: bool = False) -> Optional[str]:
+    """
+    Updates the pyproject.toml file with the new release number
+
+    :param path: Release file path
+    :param version: release number, as (<major>, <minor>, <release>)
+    :param dry_run: If `True`, the operation WILL NOT be performed
+    :return: Updated lines
+    """
+    assert RELEASE_CONFIG is not None
+    try:
+        path = Path(RELEASE_CONFIG.get("pyproject", "path"))
+        key = RELEASE_CONFIG.get("pyproject", "key", fallback=helpers.PYPROJECT_KEY)  # noqa
+    except configparser.Error as e:
+        raise helpers.NothingToDoException("No action to perform for pyproject.toml file", e)
+
+    # Update pyproject.toml file
+    return helpers.update_toml_file(
+        path=path,
+        version=version,
+        key=key,
         dry_run=dry_run,
     )

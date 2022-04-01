@@ -1,6 +1,56 @@
+[project]
+name = "bump_release"
+version = "0.9.7"
+authors = [{name = "François GUÉRIN", email = "fguerin@ville-tourcoing.fr"}]
+description = "Updates various version numbers for python projects"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development",
+]
+urls = {Homepage = "https://github.com/frague59/bump-release"}
+requires-python = ">=3.7"
+dependencies = [
+    "Click",
+    "ruamel.yaml"
+]
+
+[project.optional-dependencies]
+toml = [
+    "tomli",
+    "tomli-w"
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.scripts]
+bump_release = "bump_release:bump_release"
+bump-release = "bump_release:bump_release"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["bump_release"]
+include-package-data = false
+
+[tool.setuptools.packages]
+find = {namespaces = false}
+
+# Extra settings
 [tool.black]
 line-length = 120
-target-version = ['py37', 'py38']
+target-version = ['py37', 'py38', 'py39']
 exclude = '''
 (
   /(
